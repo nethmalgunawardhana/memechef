@@ -1,102 +1,283 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect } from 'react';
+import IngredientUpload from "@/components/IngredientUpload";
+import RecipeDisplay from "@/components/RecipeDisplay";
+import AiChef from "@/components/AiChef";
+import ChaosButton from "@/components/ChaosButton";
+import ShareRecipe from "@/components/ShareRecipe";
+import Achievements from "@/components/Achievements";
+import FixedStatsHeader from "@/components/FixedStatsHeader";
+import { 
+  analyzeIngredients, 
+  generateAbsurdRecipe, 
+  generateChefNarration,
+  mutateChaosRecipe,
+  generateMemeCaption,
+  getRatingFromHistoricalFigure,
+  Recipe 
+} from "@/services/geminiService";
+import { ttsService } from "@/services/ttsService";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  // State management
+  const [recipe, setRecipe] = useState<Recipe | null>(null);
+  const [narration, setNarration] = useState<string>('');
+  const [memeCaption, setMemeCaption] = useState<string>('');
+  const [historicalRating, setHistoricalRating] = useState<string>('');
+  
+  // Loading states
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
+  const [isNarrating, setIsNarrating] = useState(false);
+  const [isChaosLoading, setIsChaosLoading] = useState(false);
+  
+  // Stats for achievements
+  const [recipeCount, setRecipeCount] = useState(0);
+  const [chaosCount, setChaosCount] = useState(0);
+  const [shareCount, setShareCount] = useState(0);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  // Calculate achievement progress
+  const allAchievements = [
+    { id: 'first-recipe', unlocked: recipeCount >= 1 },
+    { id: 'chaos-master', unlocked: chaosCount >= 5 },
+    { id: 'sauce-sorcerer', unlocked: recipeCount >= 3 },
+    { id: 'social-butterfly', unlocked: shareCount >= 1 },
+    { id: 'chaos-legend', unlocked: chaosCount >= 10 },
+    { id: 'recipe-collector', unlocked: recipeCount >= 10 },
+    { id: 'historically-approved', unlocked: !!historicalRating },
+    { id: 'chaos-apocalypse', unlocked: chaosCount >= 25 }
+  ];
+  
+  const unlockedAchievements = allAchievements.filter(a => a.unlocked).length;
+
+  // Load stats from localStorage on mount
+  useEffect(() => {
+    const savedStats = localStorage.getItem('memechef-stats');
+    if (savedStats) {
+      const stats = JSON.parse(savedStats);
+      setRecipeCount(stats.recipeCount || 0);
+      setChaosCount(stats.chaosCount || 0);
+      setShareCount(stats.shareCount || 0);
+    }
+  }, []);
+
+  // Save stats to localStorage whenever they change
+  useEffect(() => {
+    const stats = { recipeCount, chaosCount, shareCount };
+    localStorage.setItem('memechef-stats', JSON.stringify(stats));
+  }, [recipeCount, chaosCount, shareCount]);
+
+  // Handle image upload and ingredient analysis
+  const handleImageUpload = async (file: File) => {
+    setIsAnalyzing(true);
+    setIsGeneratingRecipe(true);
+    
+    try {
+      // Analyze ingredients from image
+      const analysis = await analyzeIngredients(file);
+      
+      // Generate absurd recipe
+      const newRecipe = await generateAbsurdRecipe(analysis.ingredients);
+      setRecipe(newRecipe);
+      setRecipeCount(prev => prev + 1);
+      
+      // Generate chef narration
+      const chefScript = await generateChefNarration(newRecipe);
+      setNarration(chefScript);
+      
+      // Generate meme caption
+      const caption = await generateMemeCaption(newRecipe);
+      setMemeCaption(caption);
+      
+      // Get historical rating
+      const rating = await getRatingFromHistoricalFigure(newRecipe);
+      setHistoricalRating(rating);
+      
+    } catch (error) {
+      console.error('Error processing image:', error);
+      // Show fallback recipe
+      const fallbackRecipe: Recipe = {
+        title: "The Recipe of Technical Difficulties",
+        backstory: "Born from the chaos of AI confusion in the year 2025.",
+        ingredients: ["1 cup of patience", "2 tablespoons of hope", "A pinch of magic"],
+        instructions: [
+          "Mix ingredients while the AI figures itself out",
+          "Wait patiently for technology to cooperate", 
+          "Serve with understanding"
+        ]
+      };
+      setRecipe(fallbackRecipe);
+      setNarration("Well, this is awkward! Seems like my AI brain had a little hiccup. But hey, that's just more chaos for the recipe!");
+      setMemeCaption("When the AI chef has an existential crisis mid-recipe 🤖💭");
+    } finally {
+      setIsAnalyzing(false);
+      setIsGeneratingRecipe(false);
+    }
+  };
+
+  // Handle chaos button click
+  const handleChaosClick = async () => {
+    if (!recipe) return;
+    
+    setIsChaosLoading(true);
+    setChaosCount(prev => prev + 1);
+    
+    try {
+      // Mutate the recipe with more chaos
+      const chaosRecipe = await mutateChaosRecipe(recipe);
+      setRecipe(chaosRecipe);
+      
+      // Generate new narration for chaos recipe
+      const chefScript = await generateChefNarration(chaosRecipe);
+      setNarration(chefScript);
+      
+      // Generate new meme caption
+      const caption = await generateMemeCaption(chaosRecipe);
+      setMemeCaption(caption);
+      
+    } catch (error) {
+      console.error('Error generating chaos:', error);
+    } finally {
+      setIsChaosLoading(false);
+    }
+  };
+
+  // Handle chef narration
+  const handleStartNarration = async () => {
+    if (!narration || isNarrating) return;
+    
+    setIsNarrating(true);
+    try {
+      await ttsService.speak(narration);
+    } catch (error) {
+      console.error('Error with text-to-speech:', error);
+    } finally {
+      setIsNarrating(false);
+    }
+  };
+
+  // Handle meme caption generation
+  const handleGenerateCaption = async () => {
+    if (!recipe) return;
+    
+    try {
+      const caption = await generateMemeCaption(recipe);
+      setMemeCaption(caption);
+      // Increment share count when caption is generated (user intent to share)
+      setShareCount(prev => prev + 1);
+    } catch (error) {
+      console.error('Error generating caption:', error);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50">
+      {/* Fixed Stats Header */}
+      <FixedStatsHeader 
+        recipeCount={recipeCount}
+        chaosCount={chaosCount}
+        shareCount={shareCount}
+        achievementCount={unlockedAchievements}
+        totalAchievements={allAchievements.length}
+      />
+
+      {/* Header - add top padding to account for fixed header */}
+      <header className="text-center py-8 px-4 pt-24">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent mb-4">
+            🧑‍🍳 MemeChef
+          </h1>
+          <p className="text-xl text-gray-600 mb-2">
+            The AI-Powered Absurd Recipe Generator
+          </p>
+          <p className="text-sm text-gray-500">
+            Where chaos meets cuisine and sanity goes to die! 🔥✨
+          </p>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 pb-16">
+        <div className="max-w-6xl mx-auto space-y-8">
+          
+          {/* Ingredient Upload */}
+          <section>
+            <IngredientUpload 
+              onImageUpload={handleImageUpload}
+              isAnalyzing={isAnalyzing}
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+          </section>
+
+          {/* AI Chef */}
+          <section>
+            <AiChef 
+              narration={narration}
+              isNarrating={isNarrating}
+              onStartNarration={handleStartNarration}
+            />
+          </section>
+
+          {/* Recipe Display */}
+          {(recipe || isGeneratingRecipe) && (
+            <section>
+              {isGeneratingRecipe ? (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
+                  <h2 className="text-2xl font-bold text-purple-600 mb-2">Generating Chaos...</h2>
+                  <p className="text-gray-600">The AI chef is concocting something ridiculous!</p>
+                </div>
+              ) : (
+                <RecipeDisplay recipe={recipe} />
+              )}
+            </section>
+          )}
+
+          {/* Chaos Button */}
+          {recipe && (
+            <section>
+              <ChaosButton 
+                onChaosClick={handleChaosClick}
+                isLoading={isChaosLoading}
+                disabled={!recipe}
+              />
+            </section>
+          )}
+
+          {/* Share Recipe */}
+          {recipe && (
+            <section>
+              <ShareRecipe 
+                recipe={recipe}
+                memeCaption={memeCaption}
+                onGenerateCaption={handleGenerateCaption}
+              />
+            </section>
+          )}
+
+          {/* Achievements */}
+          <section>
+            <Achievements 
+              recipeCount={recipeCount}
+              chaosCount={chaosCount}
+              shareCount={shareCount}
+              historicalRating={historicalRating}
+            />
+          </section>
+
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      {/* Footer */}
+      <footer className="text-center py-8 border-t border-gray-200 bg-white">
+        <div className="max-w-4xl mx-auto px-4">
+          <p className="text-gray-600 mb-2">
+            Made with ❤️ and a questionable amount of chaos
+          </p>
+          <p className="text-sm text-gray-500">
+            Powered by Gemini AI • Built for the Bolt.new Hackathon 2025
+          </p>
+        </div>
       </footer>
     </div>
   );
