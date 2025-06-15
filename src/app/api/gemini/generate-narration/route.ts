@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       - Be dramatically passionate about cooking
       - Include random chef wisdom that makes no sense
       - Act like this recipe will change the world
-      - Maximum 200 words for TT
+      - Maximum 200 words for TTS
       
       Example tone: "BEHOLD! *chef's kiss* We're about to create culinary CHAOS that would make Gordon Ramsay weep tears of confusion! This recipe? ICONIC. Your taste buds? UNPREPARED. Let's get chaotic, my beautiful disasters!"
     `;
