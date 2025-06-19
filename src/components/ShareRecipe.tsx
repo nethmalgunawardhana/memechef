@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { Share2, Download, Copy, RefreshCw, Camera, Twitter, Instagram, Facebook, Music } from 'lucide-react';
 import { Recipe } from '@/services/geminiService';
 
 interface ShareRecipeProps {
@@ -10,6 +11,7 @@ interface ShareRecipeProps {
 export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: ShareRecipeProps) {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+  const [copiedToClipboard, setCopiedToClipboard] = useState(false);
   const recipeCardRef = useRef<HTMLDivElement>(null);
 
   const generateRecipeCard = async () => {
@@ -40,9 +42,19 @@ export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: 
     }
   };
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedToClipboard(true);
+      setTimeout(() => setCopiedToClipboard(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+    }
+  };
+
   const shareToSocial = (platform: string) => {
     const text = encodeURIComponent(memeCaption);
-    const hashtags = encodeURIComponent('#MemeChef #ChaosRecipe #AIChef #AbsurdCooking');
+    const hashtags = encodeURIComponent('MemeChef ChaosRecipe AIChef AbsurdCooking CulinaryChaos');
     
     let url = '';
     switch (platform) {
@@ -50,13 +62,11 @@ export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: 
         url = `https://twitter.com/intent/tweet?text=${text}&hashtags=${hashtags}`;
         break;
       case 'instagram':
-        // Instagram doesn't have direct sharing, but we can copy the caption
-        navigator.clipboard.writeText(`${memeCaption} ${hashtags}`);
+        copyToClipboard(`${memeCaption} #${hashtags.replace(/%20/g, ' #')}`);
         alert('Caption copied to clipboard! Open Instagram and paste it with your recipe image.');
         return;
       case 'tiktok':
-        // TikTok doesn't have direct web sharing
-        navigator.clipboard.writeText(`${memeCaption} ${hashtags}`);
+        copyToClipboard(`${memeCaption} #${hashtags.replace(/%20/g, ' #')}`);
         alert('Caption copied to clipboard! Open TikTok and paste it with your recipe video.');
         return;
       case 'facebook':
@@ -73,164 +83,307 @@ export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: 
     if (shareUrl) {
       const link = document.createElement('a');
       link.href = shareUrl;
-      link.download = `memechef-${recipe?.title || 'recipe'}.png`;
+      link.download = `memechef-${recipe?.title?.replace(/[^a-z0-9]/gi, '-').toLowerCase() || 'recipe'}.png`;
       link.click();
     }
   };
 
   if (!recipe) {
     return (
-      <div className="w-full max-w-lg mx-auto mb-8">
-        <div className="text-center p-8 bg-gray-100 rounded-lg">
-          <div className="text-4xl mb-2">📤</div>
-          <p className="text-gray-600">Create a recipe first to share your culinary chaos!</p>
+      <div className="w-full max-w-2xl mx-auto">
+        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-12 text-center">
+          <div className="text-6xl mb-6 animate-bounce">📤</div>
+          <h3 className="text-2xl font-bold text-white/80 mb-3">Ready to Share?</h3>
+          <p className="text-white/60 text-lg">Create a recipe first to share your culinary chaos with the world!</p>
+          
+          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-3 opacity-50">
+            {[
+              { name: 'Twitter', icon: Twitter, color: 'from-blue-500 to-blue-600' },
+              { name: 'Instagram', icon: Instagram, color: 'from-purple-500 to-pink-500' },
+              { name: 'TikTok', icon: Music, color: 'from-gray-800 to-black' },
+              { name: 'Facebook', icon: Facebook, color: 'from-blue-600 to-blue-700' }
+            ].map((platform) => (
+              <div
+                key={platform.name}
+                className={`p-4 bg-gradient-to-r ${platform.color} rounded-xl text-white/50 cursor-not-allowed`}
+              >
+                <platform.icon className="mx-auto mb-2" size={24} />
+                <div className="text-sm">{platform.name}</div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-2xl mx-auto mb-8">
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-pink-600 mb-2">📱 Share Your Chaos</h2>
-        <p className="text-gray-600">Spread the culinary madness across the internet!</p>
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-4xl font-bold mb-4 flex items-center justify-center space-x-3">
+          <Share2 className="text-blue-400 animate-pulse" size={36} />
+          <span className="bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+            Share Your Chaos
+          </span>
+          <Camera className="text-green-400 animate-bounce" size={36} />
+        </h2>
+        <p className="text-xl text-white/80">Spread the culinary madness across the internet!</p>
       </div>
 
       {/* Recipe Card for Image Generation */}
       <div 
         ref={recipeCardRef}
-        className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-lg p-6 mb-6 shadow-lg"
-        style={{ minHeight: '400px' }}
+        className="backdrop-blur-xl bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-8 mb-8 shadow-2xl border border-purple-200"
+        style={{ minHeight: '500px' }}
       >
-        <div className="text-center mb-4">
-          <div className="text-4xl mb-2">🧑‍🍳</div>
-          <h1 className="text-2xl font-bold text-purple-800 mb-2">MemeChef Recipe</h1>
-          <h2 className="text-xl font-semibold text-gray-800">{recipe.title}</h2>
+        <div className="text-center mb-6">
+          <div className="text-5xl mb-3">🧑‍🍳</div>
+          <h1 className="text-3xl font-black text-purple-800 mb-2">MemeChef Recipe</h1>
+          <h2 className="text-2xl font-bold text-gray-800 leading-tight">{recipe.title}</h2>
         </div>
         
-        <div className="bg-white rounded-lg p-4 mb-4">
-          <p className="text-sm italic text-gray-600 mb-3">{recipe.backstory}</p>
+        <div className="bg-white/80 rounded-2xl p-6 mb-6 shadow-lg">
+          <p className="text-gray-700 italic text-center mb-6 font-medium">{recipe.backstory}</p>
           
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="grid md:grid-cols-2 gap-6">
             <div>
-              <h3 className="font-semibold text-purple-700 mb-2">Ingredients:</h3>
-              <ul className="text-sm space-y-1">
-                {recipe.ingredients.slice(0, 5).map((ing, i) => (
-                  <li key={i} className="flex items-start">
-                    <span className="text-purple-500 mr-1">•</span>
-                    <span>{ing}</span>
+              <h3 className="font-bold text-purple-700 mb-3 text-lg flex items-center">
+                <span className="text-2xl mr-2">🥘</span>
+                Ingredients:
+              </h3>
+              <ul className="space-y-2">
+                {recipe.ingredients.slice(0, 6).map((ing, i) => (
+                  <li key={i} className="flex items-start text-sm">
+                    <span className="text-purple-500 mr-2 font-bold">•</span>
+                    <span className="text-gray-700">{ing}</span>
                   </li>
                 ))}
-                {recipe.ingredients.length > 5 && (
-                  <li className="text-gray-500 italic">...and more chaos!</li>
+                {recipe.ingredients.length > 6 && (
+                  <li className="text-gray-500 italic text-sm">...and {recipe.ingredients.length - 6} more chaotic ingredients!</li>
                 )}
               </ul>
             </div>
             
             <div>
-              <h3 className="font-semibold text-purple-700 mb-2">Instructions:</h3>
-              <ol className="text-sm space-y-1">
-                {recipe.instructions.slice(0, 4).map((step, i) => (
-                  <li key={i} className="flex items-start">
-                    <span className="text-purple-500 mr-1 font-medium">{i + 1}.</span>
-                    <span>{step.length > 50 ? `${step.slice(0, 50)}...` : step}</span>
+              <h3 className="font-bold text-purple-700 mb-3 text-lg flex items-center">
+                <span className="text-2xl mr-2">📋</span>
+                Instructions:
+              </h3>
+              <ol className="space-y-2">
+                {recipe.instructions.slice(0, 5).map((step, i) => (
+                  <li key={i} className="flex items-start text-sm">
+                    <span className="text-purple-500 mr-2 font-bold">{i + 1}.</span>
+                    <span className="text-gray-700">
+                      {step.length > 60 ? `${step.slice(0, 60)}...` : step}
+                    </span>
                   </li>
                 ))}
-                {recipe.instructions.length > 4 && (
-                  <li className="text-gray-500 italic">...continue the madness!</li>
+                {recipe.instructions.length > 5 && (
+                  <li className="text-gray-500 italic text-sm">...continue the madness with {recipe.instructions.length - 5} more steps!</li>
                 )}
               </ol>
             </div>
           </div>
         </div>
         
-        <div className="text-center text-sm text-purple-600 font-medium">
-          Created with MemeChef AI • Where Chaos Meets Cuisine
+        <div className="text-center">
+          <div className="inline-flex items-center space-x-2 text-purple-600 font-bold">
+            <span>✨</span>
+            <span>Created with MemeChef AI</span>
+            <span>•</span>
+            <span>Where Chaos Meets Cuisine</span>
+            <span>✨</span>
+          </div>
         </div>
       </div>
 
-      {/* Meme Caption */}
-      <div className="mb-6">
-        <div className="bg-white rounded-lg p-4 shadow-md">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="font-semibold text-gray-700">Meme Caption:</h3>
-            <button
-              onClick={onGenerateCaption}
-              className="text-pink-600 hover:text-pink-700 text-sm font-medium"
-            >
-              🎲 Generate New
-            </button>
-          </div>          <p className="text-gray-800 italic bg-gray-50 p-3 rounded border-l-4 border-pink-400">
-            &quot;{memeCaption || 'Click generate to create a meme caption!'}&quot;
+      {/* Meme Caption Section */}
+      <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 mb-8">
+        <div className="flex items-center justify-between mb-6">
+          <h3 className="text-2xl font-bold text-white flex items-center space-x-2">
+            <span className="text-3xl">💬</span>
+            <span>Meme Caption</span>
+          </h3>
+          <button
+            onClick={onGenerateCaption}
+            className="group relative px-6 py-3 bg-gradient-to-r from-pink-500 to-purple-500 rounded-xl text-white font-medium overflow-hidden transition-all duration-300 hover:scale-105"
+          >
+            <div className="absolute inset-0 bg-gradient-to-r from-pink-600 to-purple-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="relative flex items-center space-x-2">
+              <RefreshCw size={18} />
+              <span>Generate New</span>
+            </div>
+          </button>
+        </div>
+        
+        <div className="backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl p-6 mb-6">
+          <p className="text-white text-lg italic leading-relaxed">
+            &quot;{memeCaption || 'Click generate to create a meme caption that will break the internet!'}&quot;
           </p>
+        </div>
+
+        <div className="flex flex-wrap gap-3 justify-center">
+          <button
+            onClick={() => copyToClipboard(memeCaption)}
+            className={`flex items-center space-x-2 px-4 py-2 rounded-xl transition-all duration-300 ${
+              copiedToClipboard 
+                ? 'bg-green-500 text-white' 
+                : 'bg-white/10 border border-white/20 text-white hover:bg-white/20'
+            }`}
+          >
+            <Copy size={16} />
+            <span>{copiedToClipboard ? 'Copied!' : 'Copy Caption'}</span>
+          </button>
         </div>
       </div>
 
       {/* Action Buttons */}
-      <div className="space-y-4">
-        <div className="flex gap-3 justify-center">
-          <button
-            onClick={generateRecipeCard}
-            disabled={isGeneratingImage}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              isGeneratingImage
-                ? 'bg-gray-300 text-gray-500 cursor-wait'
-                : 'bg-purple-600 hover:bg-purple-700 text-white'
-            }`}
-          >
+      <div className="grid md:grid-cols-2 gap-6 mb-8">
+        <button
+          onClick={generateRecipeCard}
+          disabled={isGeneratingImage}
+          className={`group relative p-6 rounded-3xl font-bold text-lg transition-all duration-300 ${
+            isGeneratingImage
+              ? 'bg-gray-600/50 text-gray-400 cursor-wait'
+              : 'bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:scale-105 shadow-2xl shadow-purple-500/30'
+          }`}
+        >
+          <div className="flex items-center justify-center space-x-3">
             {isGeneratingImage ? (
-              <span className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                <span>Creating Image...</span>
-              </span>
+              <>
+                <div className="animate-spin rounded-full h-6 w-6 border-2 border-white border-t-transparent"></div>
+                <span>Creating Magic...</span>
+              </>
             ) : (
-              '📸 Generate Recipe Card'
+              <>
+                <Camera size={24} />
+                <span>Generate Recipe Card</span>
+              </>
             )}
-          </button>
+          </div>
+        </button>
 
-          {shareUrl && (
+        {shareUrl && (
+          <button
+            onClick={downloadImage}
+            className="group relative p-6 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-3xl font-bold text-lg transition-all duration-300 hover:scale-105 shadow-2xl shadow-green-500/30"
+          >
+            <div className="flex items-center justify-center space-x-3">
+              <Download size={24} />
+              <span>Download Image</span>
+            </div>
+          </button>
+        )}
+      </div>
+
+      {/* Social Media Buttons */}
+      <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8">
+        <h3 className="text-2xl font-bold text-center text-white mb-6">Share on Social Media</h3>
+        
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { 
+              name: 'Twitter', 
+              platform: 'twitter',
+              icon: Twitter, 
+              color: 'from-blue-500 to-blue-600',
+              hoverColor: 'hover:from-blue-600 hover:to-blue-700'
+            },
+            { 
+              name: 'Instagram', 
+              platform: 'instagram',
+              icon: Instagram, 
+              color: 'from-purple-500 to-pink-500',
+              hoverColor: 'hover:from-purple-600 hover:to-pink-600'
+            },
+            { 
+              name: 'TikTok', 
+              platform: 'tiktok',
+              icon: Music, 
+              color: 'from-gray-800 to-black',
+              hoverColor: 'hover:from-gray-900 hover:to-gray-800'
+            },
+            { 
+              name: 'Facebook', 
+              platform: 'facebook',
+              icon: Facebook, 
+              color: 'from-blue-600 to-blue-700',
+              hoverColor: 'hover:from-blue-700 hover:to-blue-800'
+            }
+          ].map((social) => (
             <button
-              onClick={downloadImage}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors"
+              key={social.name}
+              onClick={() => shareToSocial(social.platform)}
+              className={`group relative p-6 bg-gradient-to-r ${social.color} ${social.hoverColor} rounded-2xl text-white transition-all duration-300 hover:scale-105 shadow-xl overflow-hidden`}
             >
-              💾 Download Image
+              <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              <div className="relative flex flex-col items-center space-y-3">
+                <social.icon size={32} />
+                <span className="font-medium text-lg">{social.name}</span>
+              </div>
+              
+              {/* Platform specific indicators */}
+              {social.platform === 'instagram' || social.platform === 'tiktok' ? (
+                <div className="absolute top-2 right-2 text-xs bg-white/20 rounded-full px-2 py-1">
+                  Copy
+                </div>
+              ) : (
+                <div className="absolute top-2 right-2 text-xs bg-white/20 rounded-full px-2 py-1">
+                  Share
+                </div>
+              )}
             </button>
-          )}
+          ))}
         </div>
 
-        {/* Social Media Buttons */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {/* Additional sharing options */}
+        <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
-            onClick={() => shareToSocial('twitter')}
-            className="flex items-center justify-center space-x-2 p-3 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors"
+            onClick={() => copyToClipboard(`Check out this insane recipe I made with MemeChef: "${recipe.title}" - ${memeCaption}`)}
+            className="flex items-center justify-center space-x-3 p-4 backdrop-blur-sm bg-white/5 border border-white/20 rounded-xl text-white hover:bg-white/10 transition-all duration-300"
           >
-            <span>🐦</span>
-            <span className="text-sm">Twitter</span>
+            <Copy size={20} />
+            <span>Copy Shareable Link</span>
           </button>
           
           <button
-            onClick={() => shareToSocial('instagram')}
-            className="flex items-center justify-center space-x-2 p-3 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-lg transition-colors"
+            onClick={() => {
+              const subject = encodeURIComponent(`You HAVE to see this crazy recipe: ${recipe.title}`);
+              const body = encodeURIComponent(`I just created the most ridiculous recipe using MemeChef AI:\n\n"${recipe.title}"\n\n${memeCaption}\n\nCheck it out and create your own chaos at: ${window.location.href}`);
+              window.open(`mailto:?subject=${subject}&body=${body}`);
+            }}
+            className="flex items-center justify-center space-x-3 p-4 backdrop-blur-sm bg-white/5 border border-white/20 rounded-xl text-white hover:bg-white/10 transition-all duration-300"
           >
-            <span>📷</span>
-            <span className="text-sm">Instagram</span>
+            <span>📧</span>
+            <span>Share via Email</span>
           </button>
+        </div>
+      </div>
+
+      {/* Sharing tips */}
+      <div className="mt-8 backdrop-blur-sm bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-400/30 rounded-2xl p-6">
+        <h4 className="text-lg font-bold text-blue-300 mb-3 flex items-center space-x-2">
+          <span>💡</span>
+          <span>Pro Sharing Tips</span>
+        </h4>
+        <div className="grid md:grid-cols-3 gap-4 text-sm">
+          <div className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="text-yellow-400 text-lg mb-2">📸</div>
+            <div className="text-white/80 font-medium mb-1">Perfect for Instagram</div>
+            <div className="text-white/60">Generate the recipe card image for stunning visual posts</div>
+          </div>
           
-          <button
-            onClick={() => shareToSocial('tiktok')}
-            className="flex items-center justify-center space-x-2 p-3 bg-black hover:bg-gray-800 text-white rounded-lg transition-colors"
-          >
-            <span>🎵</span>
-            <span className="text-sm">TikTok</span>
-          </button>
+          <div className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="text-purple-400 text-lg mb-2">🎬</div>
+            <div className="text-white/80 font-medium mb-1">TikTok Ready</div>
+            <div className="text-white/60">Copy the caption and create your cooking chaos video</div>
+          </div>
           
-          <button
-            onClick={() => shareToSocial('facebook')}
-            className="flex items-center justify-center space-x-2 p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-          >
-            <span>📘</span>
-            <span className="text-sm">Facebook</span>
-          </button>
+          <div className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl p-4">
+            <div className="text-green-400 text-lg mb-2">🐦</div>
+            <div className="text-white/80 font-medium mb-1">Twitter Viral</div>
+            <div className="text-white/60">Share the absurdity with hashtags for maximum reach</div>
+          </div>
         </div>
       </div>
     </div>
