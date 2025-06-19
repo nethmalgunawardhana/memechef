@@ -83,48 +83,55 @@ export class TTSService {
       speechSynthesis.speak(utterance);
     });
   }
-
-  // ElevenLabs API (premium, high quality)
+  // ElevenLabs API (premium, high quality) - via server-side API
   async speakWithElevenLabs(text: string): Promise<void> {
-    const apiKey = process.env.NEXT_PUBLIC_ELEVENLABS_API_KEY;
-    if (!apiKey) {
-      throw new Error('ElevenLabs API key not configured');
-    }
-
     try {
-      // Using a dramatic male voice ID (you'd need to get this from ElevenLabs)
-      const voiceId = 'pNInz6obpgDQGcFmaJgB'; // Example voice ID - replace with actual
-      
-      const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+      const response = await fetch('/api/tts', {
         method: 'POST',
         headers: {
-          'Accept': 'audio/mpeg',
           'Content-Type': 'application/json',
-          'xi-api-key': apiKey
         },
         body: JSON.stringify({
           text: text,
-          model_id: 'eleven_monolingual_v1',
-          voice_settings: {
-            stability: 0.5,
-            similarity_boost: 0.75,
-            style: 0.8, // More dramatic
-            use_speaker_boost: true
-          }
+          provider: 'elevenlabs'
         })
       });
 
       if (!response.ok) {
-        throw new Error(`ElevenLabs API error: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('ElevenLabs API error:', errorData);
+        
+        // If the error suggests using fallback, use browser TTS
+        if (errorData.fallback) {
+          console.log('Falling back to browser TTS');
+          return this.speakWithBrowser(text);
+        }
+        
+        throw new Error(`TTS API error: ${response.status}`);
       }
 
-      const audioBlob = await response.blob();
-      const audioUrl = URL.createObjectURL(audioBlob);
+      // Check if response is audio or JSON error
+      const contentType = response.headers.get('content-type');
       
-      return this.playAudioUrl(audioUrl);
+      if (contentType?.includes('audio')) {
+        // Success: got audio data
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        return this.playAudioUrl(audioUrl);
+      } else {
+        // Got JSON response, check for errors
+        const data = await response.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        // Fallback case
+        return this.speakWithBrowser(text);
+      }
+
     } catch (error) {
       console.error('ElevenLabs TTS error:', error);
       // Fallback to browser TTS
+      console.log('Falling back to browser TTS due to error');
       return this.speakWithBrowser(text);
     }
   }
@@ -197,20 +204,29 @@ export class TTSService {
       audio.play().catch(reject);
     });
   }
-
   // Main speak method that chooses provider
   async speak(text: string): Promise<void> {
     // Add some dramatic pauses and emphasis for the chef character
     const dramaticText = this.addDramaticFlair(text);
 
-    switch (this.config.provider) {
-      case 'elevenlabs':
-        return this.speakWithElevenLabs(dramaticText);
-      case 'google':
-        return this.speakWithGoogle(dramaticText);
-      case 'browser':
-      default:
+    try {
+      switch (this.config.provider) {
+        case 'elevenlabs':
+          return await this.speakWithElevenLabs(dramaticText);
+        case 'google':
+          return await this.speakWithGoogle(dramaticText);
+        case 'browser':
+        default:
+          return await this.speakWithBrowser(dramaticText);
+      }
+    } catch (error) {
+      console.error(`TTS error with ${this.config.provider}:`, error);
+      // Ultimate fallback to browser TTS
+      if (this.config.provider !== 'browser') {
+        console.log('Falling back to browser TTS');
         return this.speakWithBrowser(dramaticText);
+      }
+      throw error;
     }
   }
 
@@ -248,7 +264,30 @@ export class TTSService {
   updateConfig(newConfig: Partial<TTSConfig>): void {
     this.config = { ...this.config, ...newConfig };
   }
+
+  // Test TTS configuration
+  async testConfiguration(): Promise<{ success: boolean; provider: string; error?: string }> {
+    try {
+      // Test with a short phrase
+      await this.speak("Test");
+      return { success: true, provider: this.config.provider };
+    } catch (error) {
+      return { 
+        success: false, 
+        provider: this.config.provider,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      };
+    }
+  }
+
+  // Get available voices for browser TTS
+  getAvailableVoices(): SpeechSynthesisVoice[] {
+    if (!('speechSynthesis' in window)) {
+      return [];
+    }
+    return speechSynthesis.getVoices();
+  }
 }
 
-// Export singleton instance
-export const ttsService = new TTSService();
+// Export singleton instance with ElevenLabs as default
+export const ttsService = new TTSService({ provider: 'elevenlabs' });
