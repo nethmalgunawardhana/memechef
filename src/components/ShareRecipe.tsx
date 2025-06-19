@@ -133,7 +133,7 @@ export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: 
       {/* Recipe Card for Image Generation */}
       <div 
         ref={recipeCardRef}
-        className="backdrop-blur-xl bg-gradient-to-br from-purple-100 to-pink-100 rounded-3xl p-8 mb-8 shadow-2xl border border-purple-200"
+        className="bg-white rounded-3xl p-8 mb-8 shadow-2xl border border-purple-200 text-black"
         style={{ minHeight: '500px' }}
       >
         <div className="text-center mb-6">
@@ -142,7 +142,7 @@ export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: 
           <h2 className="text-2xl font-bold text-gray-800 leading-tight">{recipe.title}</h2>
         </div>
         
-        <div className="bg-white/80 rounded-2xl p-6 mb-6 shadow-lg">
+        <div className="bg-gray-50 rounded-2xl p-6 mb-6 shadow-lg">
           <p className="text-gray-700 italic text-center mb-6 font-medium">{recipe.backstory}</p>
           
           <div className="grid md:grid-cols-2 gap-6">
