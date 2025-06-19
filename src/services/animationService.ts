@@ -111,15 +111,15 @@ export class AnimationService {
         return data.result_url;
       } else if (data.status === 'error') {
         throw new Error(`D-ID generation failed: ${data.error?.description || 'Unknown error'}`);
-      }
-
-      // Wait 10 seconds before polling again
+      }      // Wait 10 seconds before polling again
       await new Promise(resolve => setTimeout(resolve, 10000));
       attempts++;
     }
 
     throw new Error('D-ID generation timeout');
-  }  // Rive animation integration (for interactive vector animations)
+  }
+
+  // Rive animation integration (for interactive vector animations)
   async loadRiveChef(): Promise<RiveController> {
     try {
       // This would integrate with Rive runtime
@@ -137,14 +137,14 @@ export class AnimationService {
   }
 
   // CSS-based emoji animations (fallback)
-  getEmojiAnimations(): ChefAnimation {
-    return {
+  getEmojiAnimations(): ChefAnimation {    return {
       idle: '🧑‍🍳',
       speaking: '😤🧑‍🍳',
       excited: '🤩🧑‍🍳',
       thinking: '🤔🧑‍🍳'
     };
   }
+
   // Lottie animation integration
   async loadLottieChef(): Promise<LottieController> {
     try {
@@ -155,12 +155,12 @@ export class AnimationService {
         stop: () => console.log('Stopping Lottie animation'),
         setDirection: (direction: number) => console.log(`Setting direction to ${direction}`),
         setSpeed: (speed: number) => console.log(`Setting speed to ${speed}`)
-      };
-    } catch (error) {
+      };    } catch (error) {
       console.error('Lottie animation error:', error);
       throw error;
     }
   }
+
   // Get animation based on current provider
   async getChefAnimation(state: 'idle' | 'speaking' | 'excited' | 'thinking'): Promise<string | AnimationResult> {
     switch (this.config.provider) {
@@ -194,11 +194,12 @@ export class AnimationService {
     };
     return frameMap[state as keyof typeof frameMap] || 0;
   }
-
   // Update animation configuration
   updateConfig(newConfig: Partial<AnimationConfig>): void {
     this.config = { ...this.config, ...newConfig };
-  }  // Create animated GIF from frames (for social sharing)
+  }
+
+  // Create animated GIF from frames (for social sharing)
   async createAnimatedGIF(frames: string[]): Promise<Blob> {
     // This would use a library like gif.js to create animated GIFs
     // For now, return a placeholder

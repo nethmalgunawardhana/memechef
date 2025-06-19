@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { Heart } from 'lucide-react';
 import IngredientUpload from "@/components/IngredientUpload";
 import RecipeDisplay from "@/components/RecipeDisplay";
 import AiChef from "@/components/AiChef";
@@ -18,6 +19,67 @@ import {
   Recipe 
 } from "@/services/geminiService";
 import { ttsService } from "@/services/ttsService";
+
+// Background Animation Component
+const AnimatedBackground = () => {
+  return (
+    <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      {/* Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-pink-900 to-orange-900 opacity-20"></div>
+      
+      {/* Floating Food Icons */}
+      {[...Array(15)].map((_, i) => (
+        <div
+          key={i}
+          className={`absolute text-white/10 text-4xl animate-pulse`}
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animationDelay: `${Math.random() * 5}s`,
+            animationDuration: `${3 + Math.random() * 4}s`
+          }}
+        >
+          {['🍳', '🔥', '✨', '🌟', '💫', '🎭', '🎪', '🌪️'][Math.floor(Math.random() * 8)]}
+        </div>
+      ))}
+      
+      {/* Animated Particles */}
+      <div className="absolute inset-0">
+        {[...Array(30)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 bg-gradient-to-r from-purple-400 to-pink-400 rounded-full animate-ping"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 3}s`,
+              animationDuration: `${2 + Math.random() * 3}s`
+            }}
+          ></div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Glass Card Component
+interface GlassCardProps {
+  children: React.ReactNode;
+  className?: string;
+  hover?: boolean;
+}
+
+const GlassCard = ({ children, className = "", hover = true, ...props }: GlassCardProps & React.HTMLAttributes<HTMLDivElement>) => (
+  <div className={`
+    backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl
+    shadow-2xl shadow-purple-500/20
+    ${hover ? 'hover:bg-white/15 hover:scale-105 hover:shadow-purple-500/30' : ''}
+    transition-all duration-500 ease-out
+    ${className}
+  `} {...props}>
+    {children}
+  </div>
+);
 
 export default function Home() {
   // State management
@@ -53,19 +115,23 @@ export default function Home() {
 
   // Load stats from localStorage on mount
   useEffect(() => {
-    const savedStats = localStorage.getItem('memechef-stats');
-    if (savedStats) {
-      const stats = JSON.parse(savedStats);
-      setRecipeCount(stats.recipeCount || 0);
-      setChaosCount(stats.chaosCount || 0);
-      setShareCount(stats.shareCount || 0);
+    if (typeof window !== 'undefined') {
+      const savedStats = localStorage.getItem('memechef-stats');
+      if (savedStats) {
+        const stats = JSON.parse(savedStats);
+        setRecipeCount(stats.recipeCount || 0);
+        setChaosCount(stats.chaosCount || 0);
+        setShareCount(stats.shareCount || 0);
+      }
     }
   }, []);
 
   // Save stats to localStorage whenever they change
   useEffect(() => {
-    const stats = { recipeCount, chaosCount, shareCount };
-    localStorage.setItem('memechef-stats', JSON.stringify(stats));
+    if (typeof window !== 'undefined') {
+      const stats = { recipeCount, chaosCount, shareCount };
+      localStorage.setItem('memechef-stats', JSON.stringify(stats));
+    }
   }, [recipeCount, chaosCount, shareCount]);
 
   // Handle image upload and ingredient analysis
@@ -172,8 +238,9 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-yellow-50">
-      {/* Fixed Stats Header */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white relative overflow-hidden">
+      <AnimatedBackground />
+        {/* Fixed Stats Header */}
       <FixedStatsHeader 
         recipeCount={recipeCount}
         chaosCount={chaosCount}
@@ -182,102 +249,117 @@ export default function Home() {
         totalAchievements={allAchievements.length}
       />
 
-      {/* Header - add top padding to account for fixed header */}
-      <header className="text-center py-8 px-4 pt-24">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-6xl font-bold bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent mb-4">
-            🧑‍🍳 MemeChef
-          </h1>
-          <p className="text-xl text-gray-600 mb-2">
-            The AI-Powered Absurd Recipe Generator
-          </p>
-          <p className="text-sm text-gray-500">
-            Where chaos meets cuisine and sanity goes to die! 🔥✨
-          </p>
+      {/* Hero Section */}
+      <div className="relative pt-32 pb-16 px-4">
+        <div className="max-w-6xl mx-auto text-center space-y-8">
+          <div className="space-y-4">
+            <h1 className="text-6xl md:text-7xl lg:text-8xl font-black bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent animate-pulse">
+              🧑‍🍳 MemeChef
+            </h1>
+            <p className="text-xl md:text-2xl lg:text-3xl text-white/80 font-light">
+              The AI-Powered Absurd Recipe Generator
+            </p>
+            <p className="text-lg text-purple-200">
+              Where chaos meets cuisine and sanity goes to die! 🔥✨
+            </p>
+          </div>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
-      <main className="container mx-auto px-4 pb-16">
-        <div className="max-w-6xl mx-auto space-y-8">
-          
-          {/* Ingredient Upload */}
-          <section>
+      <main className="max-w-6xl mx-auto px-4 space-y-12 pb-20">
+        
+        {/* Ingredient Upload */}
+        <section>
+          <GlassCard className="p-8">
             <IngredientUpload 
               onImageUpload={handleImageUpload}
               isAnalyzing={isAnalyzing}
             />
-          </section>
+          </GlassCard>
+        </section>
 
-          {/* AI Chef */}
-          <section>
+        {/* AI Chef */}
+        <section>
+          <GlassCard className="p-8">
             <AiChef 
               narration={narration}
               isNarrating={isNarrating}
               onStartNarration={handleStartNarration}
             />
-          </section>
+          </GlassCard>
+        </section>
 
-          {/* Recipe Display */}
-          {(recipe || isGeneratingRecipe) && (
-            <section>
-              {isGeneratingRecipe ? (
-                <div className="text-center py-12">
-                  <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-600 mx-auto mb-4"></div>
-                  <h2 className="text-2xl font-bold text-purple-600 mb-2">Generating Chaos...</h2>
-                  <p className="text-gray-600">The AI chef is concocting something ridiculous!</p>
-                </div>
-              ) : (
+        {/* Recipe Display */}
+        {(recipe || isGeneratingRecipe) && (
+          <section>
+            {isGeneratingRecipe ? (
+              <GlassCard className="p-12 text-center">
+                <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-purple-400 mx-auto mb-4"></div>
+                <h2 className="text-2xl font-bold text-purple-300 mb-2">Generating Chaos...</h2>
+                <p className="text-white/70">The AI chef is concocting something ridiculous!</p>
+              </GlassCard>
+            ) : (
+              <GlassCard className="p-8">
                 <RecipeDisplay recipe={recipe} />
-              )}
-            </section>
-          )}
+              </GlassCard>
+            )}
+          </section>
+        )}
 
-          {/* Chaos Button */}
-          {recipe && (
-            <section>
+        {/* Chaos Button */}
+        {recipe && (
+          <section>
+            <GlassCard className="p-8">
               <ChaosButton 
                 onChaosClick={handleChaosClick}
                 isLoading={isChaosLoading}
                 disabled={!recipe}
               />
-            </section>
-          )}
+            </GlassCard>
+          </section>
+        )}
 
-          {/* Share Recipe */}
-          {recipe && (
-            <section>
+        {/* Share Recipe */}
+        {recipe && (
+          <section>
+            <GlassCard className="p-8">
               <ShareRecipe 
                 recipe={recipe}
                 memeCaption={memeCaption}
                 onGenerateCaption={handleGenerateCaption}
               />
-            </section>
-          )}
+            </GlassCard>
+          </section>
+        )}
 
-          {/* Achievements */}
-          <section>
+        {/* Achievements */}
+        <section>
+          <GlassCard className="p-8">
             <Achievements 
               recipeCount={recipeCount}
               chaosCount={chaosCount}
               shareCount={shareCount}
               historicalRating={historicalRating}
             />
-          </section>
+          </GlassCard>
+        </section>
 
-        </div>
       </main>
 
       {/* Footer */}
-      <footer className="text-center py-8 border-t border-gray-200 bg-white">
-        <div className="max-w-4xl mx-auto px-4">
-          <p className="text-gray-600 mb-2">
-            Made with ❤️ and a questionable amount of chaos
-          </p>
-          <p className="text-sm text-gray-500">
-            Powered by Gemini AI • Built for the Bolt.new Hackathon 2025
-          </p>
-        </div>
+      <footer className="relative">
+        <GlassCard className="m-4 p-8 text-center" hover={false}>
+          <div className="space-y-2">
+            <p className="text-white/80 flex items-center justify-center space-x-2">
+              <Heart className="text-red-400" size={18} />
+              <span>Made with ❤️ and a questionable amount of chaos</span>
+            </p>
+            <p className="text-white/60 text-sm">
+              Powered by Gemini AI • Built for the Bolt.new Hackathon 2025
+            </p>
+          </div>
+        </GlassCard>
       </footer>
     </div>
   );
