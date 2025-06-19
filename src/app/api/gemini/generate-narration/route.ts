@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
     
     const prompt = `
       Create a chaotic, meme-worthy narration script for this recipe in the voice of an unhinged AI chef.
