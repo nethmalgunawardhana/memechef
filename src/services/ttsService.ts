@@ -178,7 +178,7 @@ export class TTSService {
 // Export singleton instance with ElevenLabs as default
 export const ttsService = new TTSService({
   provider: 'elevenlabs',
-  voiceId: 'pNInz6obpgDQGcFmaJgB', // Adam voice - free tier compatible
+  voiceId: '9BWtsMINqrJLrRacOk9x', 
   stability: 0.5,
   similarity_boost: 0.75,
   style: 0.0

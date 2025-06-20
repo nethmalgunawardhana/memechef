@@ -9,6 +9,7 @@ import ChaosButton from "@/components/ChaosButton";
 import ShareRecipe from "@/components/ShareRecipe";
 import Achievements from "@/components/Achievements";
 import FixedStatsHeader from "@/components/FixedStatsHeader";
+import LoadingScreen from '@/components/LoadingScreen';
 import { 
   analyzeIngredients, 
   generateAbsurdRecipe, 
@@ -93,25 +94,30 @@ export default function Home() {
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   const [isNarrating, setIsNarrating] = useState(false);
   const [isChaosLoading, setIsChaosLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [progress, setProgress] = useState(0);
   
   // Stats for achievements
   const [recipeCount, setRecipeCount] = useState(0);
   const [chaosCount, setChaosCount] = useState(0);
   const [shareCount, setShareCount] = useState(0);
 
-  // Calculate achievement progress
-  const allAchievements = [
-    { id: 'first-recipe', unlocked: recipeCount >= 1 },
-    { id: 'chaos-master', unlocked: chaosCount >= 5 },
-    { id: 'sauce-sorcerer', unlocked: recipeCount >= 3 },
-    { id: 'social-butterfly', unlocked: shareCount >= 1 },
-    { id: 'chaos-legend', unlocked: chaosCount >= 10 },
-    { id: 'recipe-collector', unlocked: recipeCount >= 10 },
-    { id: 'historically-approved', unlocked: !!historicalRating },
-    { id: 'chaos-apocalypse', unlocked: chaosCount >= 25 }
-  ];
-  
-  const unlockedAchievements = allAchievements.filter(a => a.unlocked).length;
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setProgress(prevProgress => {
+        if (prevProgress >= 100) {
+          clearInterval(timer);
+          setTimeout(() => setIsLoading(false), 500); // brief pause
+          return 100;
+        }
+        return prevProgress + Math.random() * 5;
+      });
+    }, 80); 
+
+    return () => {
+      clearInterval(timer);
+    };
+  }, []);
 
   // Load stats from localStorage on mount
   useEffect(() => {
@@ -133,6 +139,24 @@ export default function Home() {
       localStorage.setItem('memechef-stats', JSON.stringify(stats));
     }
   }, [recipeCount, chaosCount, shareCount]);
+
+  if (isLoading) {
+    return <LoadingScreen progress={progress} />;
+  }
+
+  // Calculate achievement progress
+  const allAchievements = [
+    { id: 'first-recipe', unlocked: recipeCount >= 1 },
+    { id: 'chaos-master', unlocked: chaosCount >= 5 },
+    { id: 'sauce-sorcerer', unlocked: recipeCount >= 3 },
+    { id: 'social-butterfly', unlocked: shareCount >= 1 },
+    { id: 'chaos-legend', unlocked: chaosCount >= 10 },
+    { id: 'recipe-collector', unlocked: recipeCount >= 10 },
+    { id: 'historically-approved', unlocked: !!historicalRating },
+    { id: 'chaos-apocalypse', unlocked: chaosCount >= 25 }
+  ];
+  
+  const unlockedAchievements = allAchievements.filter(a => a.unlocked).length;
 
   // Handle image upload and ingredient analysis
   const handleImageUpload = async (file: File) => {
