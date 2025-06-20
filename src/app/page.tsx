@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Heart } from 'lucide-react';
 import IngredientUpload from "@/components/IngredientUpload";
 import RecipeDisplay from "@/components/RecipeDisplay";
@@ -27,6 +27,7 @@ import {
   Recipe 
 } from "@/services/geminiService";
 import { ttsService } from "@/services/ttsService";
+import { soundManager } from "@/services/soundManager";
 
 // Game Levels and Player Titles
 const PLAYER_LEVELS = [
@@ -65,20 +66,7 @@ export default function Home() {
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [floatingItems, setFloatingItems] = useState<Array<{id: number, emoji: string, points?: number, x: number, y: number}>>([]);
   const [gameEffects, setGameEffects] = useState<Array<{id: number, type: 'success' | 'bonus' | 'level-up', message: string}>>([]);
-  const [comboTimer, setComboTimer] = useState<NodeJS.Timeout | null>(null);
-  
-  // Sound effects
-  const soundEffects = useRef({
-    levelUp: null as HTMLAudioElement | null,
-    achievement: null as HTMLAudioElement | null,
-    combo: null as HTMLAudioElement | null,
-    chaosButton: null as HTMLAudioElement | null,
-    chefKiss: null as HTMLAudioElement | null,
-    success: null as HTMLAudioElement | null,
-    background: null as HTMLAudioElement | null
-  });
-
-  // Background music state
+  const [comboTimer, setComboTimer] = useState<NodeJS.Timeout | null>(null);  // Background music state
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [musicVolume, setMusicVolume] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -90,9 +78,7 @@ export default function Home() {
   
   const [, setUserHasInteracted] = useState(false);
   const [showMusicTip, setShowMusicTip] = useState(true);
-  const [audioLoadingStatus, setAudioLoadingStatus] = useState<Record<string, string>>({});
-
-  // Save music settings
+  const [audioLoadingStatus, setAudioLoadingStatus] = useState<Record<string, string>>({});  // Save music settings
   useEffect(() => {
     if (typeof window !== 'undefined') {
       localStorage.setItem('memechef-music-volume', musicVolume.toString());
@@ -100,26 +86,21 @@ export default function Home() {
     }
   }, [musicVolume, isMusicPlaying]);
 
-  // Initialize audio
+  // Initialize audio with sound manager (only once)
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Initialize background music
-      const bgMusic = new Audio('/sounds/background.mp3');
-      bgMusic.loop = true;
-      bgMusic.volume = musicVolume;
-      soundEffects.current.background = bgMusic;
-      
-      // Initialize sound effects
-      soundEffects.current.levelUp = new Audio('/sounds/level-up.mp3');
-      soundEffects.current.achievement = new Audio('/sounds/achievement.mp3');
-      soundEffects.current.combo = new Audio('/sounds/combo.mp3');
-      soundEffects.current.chaosButton = new Audio('/sounds/chaos-button.mp3');
-      soundEffects.current.chefKiss = new Audio('/sounds/chef-kiss.mp3');
-      soundEffects.current.success = new Audio('/sounds/success.mp3');
-      
+      soundManager.initializeSounds();
       setAudioLoadingStatus({backgroundMusic: "Ready"});
     }
-  }, [musicVolume]);
+  }, []); // Empty dependency array - only run once
+
+  // Update sound manager config when music settings change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // When music is playing, isMuted should be false
+      soundManager.updateConfig(!isMusicPlaying, musicVolume);
+    }
+  }, [musicVolume, isMusicPlaying]);
 
   // Loading screen
   useEffect(() => {
@@ -150,20 +131,38 @@ export default function Home() {
       localStorage.setItem('memechef-stats', JSON.stringify(stats));
     }
   }, [recipeCount, chaosCount, shareCount, playerXP, playerLevel]);
+  // Helper function to play sound effects
+  const playSound = useCallback((soundName: string) => {
+    soundManager.playSound(soundName);
+  }, []);
 
+  const addXP = useCallback((amount: number, emoji = '✨', x = window.innerWidth / 2, y = window.innerHeight / 2) => {
+    setPlayerXP(prev => prev + amount);
+    
+    // Play achievement sound for big XP gains
+    if (amount >= 100) {
+      playSound('achievement');
+    }
+    
+    setFloatingItems(prev => [...prev, {
+      id: Date.now(),
+      emoji,
+      points: amount,
+      x,
+      y
+    }]);
+  }, [playSound]);
   // Level up check
   useEffect(() => {
     const currentLevel = PLAYER_LEVELS.find((level, index) => 
       playerXP >= level.threshold && 
       (index === PLAYER_LEVELS.length - 1 || playerXP < PLAYER_LEVELS[index + 1].threshold)
     );
-    
-    if (currentLevel && currentLevel.level > playerLevel) {
+      if (currentLevel && currentLevel.level > playerLevel) {
       setPlayerLevel(currentLevel.level);
       
-      if (soundEffects.current.levelUp) {
-        soundEffects.current.levelUp.play().catch(console.error);
-      }
+      // Play level up sound
+      playSound('levelUp');
       
       setGameEffects(prev => [...prev, {
         id: Date.now(),
@@ -171,9 +170,16 @@ export default function Home() {
         message: `Level Up! ${currentLevel.title}`
       }]);
       
-      addXP(250, '⭐', window.innerWidth / 2, window.innerHeight / 2);
+      // Add level up floating effect without triggering XP change
+      setFloatingItems(prev => [...prev, {
+        id: Date.now(),
+        emoji: '⭐',
+        points: 250,
+        x: window.innerWidth / 2,
+        y: window.innerHeight / 2
+      }]);
     }
-  }, [playerXP, playerLevel]);
+  }, [playerXP, playerLevel, playSound]);
 
   // Combo timer
   useEffect(() => {
@@ -233,42 +239,24 @@ export default function Home() {
     }
     
     return {
-      title: currentLevel.title,
-      icon: currentLevel.icon,
+      title: currentLevel.title,      icon: currentLevel.icon,
       level: currentLevel.level,
       progress: 100,
       nextTitle: null,
       xpNeeded: 0
     };
   };
-
-  const addXP = (amount: number, emoji = '✨', x = window.innerWidth / 2, y = window.innerHeight / 2) => {
-    setPlayerXP(prev => prev + amount);
-    
-    setFloatingItems(prev => [...prev, {
-      id: Date.now(),
-      emoji,
-      points: amount,
-      x,
-      y
-    }]);
-  };
   const toggleBackgroundMusic = () => {
-    if (soundEffects.current.background) {
-      try {
-        if (isMusicPlaying) {
-          soundEffects.current.background.pause();
-          setIsMusicPlaying(false);
-        } else {
-          soundEffects.current.background.play()
-            .then(() => setIsMusicPlaying(true))
-            .catch(console.error);
-        }
-        setUserHasInteracted(true);
-      } catch (error) {
-        console.error("Error toggling music:", error);
-      }
+    try {
+      const isPlaying = soundManager.toggleBackgroundMusic();
+      setIsMusicPlaying(isPlaying);
+      setUserHasInteracted(true);
+    } catch (error) {
+      console.error("Error toggling music:", error);
     }
+  };  const handleVolumeChange = (volume: number) => {
+    setMusicVolume(volume);
+    // The sound manager will be updated by the useEffect hook
   };
 
   const handleImageUpload = async (file: File) => {
@@ -298,6 +286,9 @@ export default function Home() {
       setHistoricalRating(rating);
       
       addXP(totalPointsEarned, '🍽️', window.innerWidth / 2, window.innerHeight / 2);
+      
+      // Play success sound
+      playSound('success');
       
     } catch (error) {
       console.error('Error processing image:', error);
@@ -359,6 +350,13 @@ export default function Home() {
       
       addXP(chaosPoints, '🔥', window.innerWidth / 2, window.innerHeight / 2);
       
+      // Play chaos/combo sound
+      if (comboChain > 1) {
+        playSound('combo');
+      } else {
+        playSound('chefKiss');
+      }
+      
     } catch (error) {
       console.error('Error generating chaos:', error);
       setComboChain(0);
@@ -369,16 +367,14 @@ export default function Home() {
 
   const handleStartNarration = async () => {
     if (!narration || isNarrating) return;
-    
-    setIsNarrating(true);
+      setIsNarrating(true);
     try {
       await ttsService.speak(narration);
       
-      if (soundEffects.current.chefKiss) {
-        setTimeout(() => {
-          soundEffects.current.chefKiss?.play().catch(console.error);
-        }, 500);
-      }
+      // Play chef kiss sound after narration
+      setTimeout(() => {
+        playSound('chefKiss');
+      }, 500);
     } catch (error) {
       console.error('Error with text-to-speech:', error);
     } finally {
@@ -424,13 +420,11 @@ export default function Home() {
         totalAchievements={0}
       />
 
-      <LevelUpNotification gameEffects={gameEffects} />
-
-      <MusicControl 
+      <LevelUpNotification gameEffects={gameEffects} />      <MusicControl 
         isMusicPlaying={isMusicPlaying}
         musicVolume={musicVolume}
         onToggle={toggleBackgroundMusic}
-        onVolumeChange={setMusicVolume}
+        onVolumeChange={handleVolumeChange}
         audioLoadingStatus={audioLoadingStatus}
       />
       
@@ -576,8 +570,7 @@ export default function Home() {
               <h2 className="text-2xl font-bold mt-2">Embrace the Chaos</h2>
             </div>
             
-            <GlassCard className="p-8 text-center" rarity="legendary" glow pulse>
-              <ChaosButton 
+            <GlassCard className="p-8 text-center" rarity="legendary" glow pulse>              <ChaosButton 
                 onClick={handleChaosClick}
                 isLoading={isChaosLoading}
                 chaosCount={chaosCount}

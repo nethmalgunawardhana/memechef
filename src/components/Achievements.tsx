@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Trophy, Star, Crown, Target, Award, Medal, Sparkles } from 'lucide-react';
 
 interface Achievement {
@@ -32,6 +32,7 @@ export default function Achievements({
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [newlyUnlocked, setNewlyUnlocked] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const previousAchievements = useRef<Achievement[]>([]);
 
   useEffect(() => {
     const allAchievements: Achievement[] = [
@@ -138,10 +139,9 @@ export default function Achievements({
         progress: playerLevel,
         maxProgress: 7,
         rarity: 'legendary'
-      }
-    ];
+      }    ];
 
-    const prevAchievements = achievements;
+    const prevAchievements = previousAchievements.current;
     const updatedAchievements = allAchievements;
     
     // Check for newly unlocked achievements
@@ -159,8 +159,10 @@ export default function Achievements({
         setNewlyUnlocked(prev => prev.filter(id => !newUnlocks.includes(id)));
       }, 4000);
     }
-      setAchievements(updatedAchievements);
-  }, [recipeCount, chaosCount, shareCount, historicalRating, playerLevel, playerXP, achievements]);
+    
+    setAchievements(updatedAchievements);
+    previousAchievements.current = updatedAchievements;
+  }, [recipeCount, chaosCount, shareCount, historicalRating, playerLevel, playerXP]);
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
   const progressPercentage = (unlockedCount / achievements.length) * 100;

@@ -68,14 +68,13 @@ const MusicControl = ({
             group-hover:opacity-100`}
         >
           <div className="flex items-center w-full gap-2">
-            <Volume1 size={14} className={isMusicPlaying ? "text-green-300" : "text-white/70"} />
-            <input 
+            <Volume1 size={14} className={isMusicPlaying ? "text-green-300" : "text-white/70"} />            <input 
               type="range" 
               min="0" 
               max="100" 
               value={musicVolume * 100} 
               onChange={(e) => onVolumeChange(Number(e.target.value) / 100)}
-              className={`w-full ${isMusicPlaying ? '' : 'inactive'} cursor-pointer`}
+              className={`w-full ${isMusicPlaying ? 'volume-slider-active' : 'volume-slider-inactive'} cursor-pointer`}
               style={{
                 background: `linear-gradient(90deg, 
                   ${isMusicPlaying ? 'rgba(74, 222, 128, 0.7)' : 'rgba(255, 255, 255, 0.3)'} 
@@ -83,6 +82,7 @@ const MusicControl = ({
                   rgba(255, 255, 255, 0.1) ${musicVolume * 100}%)`
               }}
               title={`Volume: ${Math.round(musicVolume * 100)}%`}
+              disabled={!isMusicPlaying}
             />
             <Volume2 size={14} className={isMusicPlaying ? "text-green-300" : "text-white/70"} />
           </div>

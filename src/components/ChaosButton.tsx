@@ -1,5 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { Shuffle, Zap, Skull, AlertTriangle, Flame } from 'lucide-react';
+import { soundManager } from '@/services/soundManager';
 
 interface ChaosButtonProps {
   onClick: () => void;
@@ -8,20 +9,11 @@ interface ChaosButtonProps {
   disabled?: boolean;
 }
 
-export default function ChaosButton({ onClick, isLoading, chaosCount, disabled = false }: ChaosButtonProps) {
-  const [clickCount, setClickCount] = useState(0);
+export default function ChaosButton({ onClick, isLoading, chaosCount, disabled = false }: ChaosButtonProps) {  const [clickCount, setClickCount] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [particles, setParticles] = useState<Array<{ id: number; emoji: string; x: number; y: number }>>([]);
   
-  // Sound effect reference
-  const chaosSound = useRef<HTMLAudioElement | null>(null);
-  
-  // Initialize sound effect
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      chaosSound.current = new Audio('/sounds/chaos-button.mp3');
-    }
-  }, []);
+  // No need for sound management here, using sound manager
 
   const handleClick = () => {
     if (disabled || isLoading) return;
@@ -29,11 +21,8 @@ export default function ChaosButton({ onClick, isLoading, chaosCount, disabled =
     setClickCount(prev => prev + 1);
     setIsShaking(true);
     
-    // Play chaos button sound
-    if (chaosSound.current) {
-      chaosSound.current.currentTime = 0;
-      chaosSound.current.play().catch(console.error);
-    }
+    // Play chaos button sound using sound manager
+    soundManager.playSound('chaosButton');
     
     // Create particle explosion
     const newParticles = Array.from({ length: 12 }, (_, i) => ({

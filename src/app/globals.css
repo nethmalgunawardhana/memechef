@@ -243,3 +243,70 @@ input[type="range"].inactive::-webkit-slider-thumb {
 input[type="range"].inactive::-moz-range-thumb {
   background: #d4d4d8;
 }
+
+/* Volume Control Styles */
+.volume-slider-active {
+  background: linear-gradient(90deg, rgba(74, 222, 128, 0.7) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-radius: 9999px;
+  height: 6px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.volume-slider-active::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4ade80;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.volume-slider-active::-webkit-slider-thumb:hover {
+  background: #22c55e;
+  transform: scale(1.1);
+}
+
+.volume-slider-inactive {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-radius: 9999px;
+  height: 6px;
+  outline: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.volume-slider-inactive::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #6b7280;
+  cursor: not-allowed;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Firefox Volume Slider */
+.volume-slider-active::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4ade80;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.volume-slider-inactive::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #6b7280;
+  cursor: not-allowed;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
