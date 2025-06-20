@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Shuffle, Zap, Skull, AlertTriangle, Flame } from 'lucide-react';
 
 interface ChaosButtonProps {
@@ -11,6 +11,16 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
   const [clickCount, setClickCount] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [particles, setParticles] = useState<Array<{ id: number; emoji: string; x: number; y: number }>>([]);
+  
+  // Sound effect reference
+  const chaosSound = useRef<HTMLAudioElement | null>(null);
+  
+  // Initialize sound effect
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      chaosSound.current = new Audio('/sounds/chaos-button.mp3');
+    }
+  }, []);
 
   const handleClick = () => {
     if (disabled || isLoading) return;
@@ -18,8 +28,14 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
     setClickCount(prev => prev + 1);
     setIsShaking(true);
     
+    // Play chaos button sound
+    if (chaosSound.current) {
+      chaosSound.current.currentTime = 0;
+      chaosSound.current.play().catch(console.error);
+    }
+    
     // Create particle explosion
-    const newParticles = Array.from({ length: 8 }, (_, i) => ({
+    const newParticles = Array.from({ length: 12 }, (_, i) => ({
       id: Date.now() + i,
       emoji: getRandomEmoji(),
       x: Math.random() * 100,
@@ -53,8 +69,37 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
   };
 
   const getRandomEmoji = () => {
-    const chaosEmojis = ['🌪️', '💥', '🔥', '⚡', '🌋', '💫', '🎭', '🎪', '🎢', '🎯', '💀', '☄️'];
+    const chaosEmojis = ['🌪️', '💥', '🔥', '⚡', '🌋', '💫', '🎭', '🎪', '🎢', '🎯', '💀', '☄️', '🎮', '🎲', '🏆', '⭐', '✨', '💯'];
     return chaosEmojis[Math.floor(Math.random() * chaosEmojis.length)];
+  };
+  
+  const getPowerUpText = () => {
+    if (clickCount === 0) return null;
+    
+    const powerUps = [
+      'Spice Multiplier x2',
+      'Flavor Boost +50',
+      'Recipe Absurdity +100%',
+      'Ingredient Randomizer',
+      'Time Warp Cooking',
+      'Chaos Enchantment',
+      'Taste Confusion',
+      'Gordon Ramsay Rage',
+      'Flavor Explosion',
+      'Kitchen Mayhem'
+    ];
+    
+    if (clickCount % 3 === 0) {
+      const powerUp = powerUps[Math.floor(Math.random() * powerUps.length)];
+      return { text: powerUp, type: 'rare' };
+    }
+    
+    if (clickCount % 2 === 0) {
+      const powerUp = powerUps[Math.floor(Math.random() * 5)];
+      return { text: powerUp, type: 'common' };
+    }
+    
+    return null;
   };
 
   const chaosStatus = getChaosLevel();
@@ -172,8 +217,30 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
               chaosStatus.intensity >= 3 ? 'bg-white/10' : 'bg-white/5'
             }`}></div>
           </button>
-        </div>
-
+        </div>        {/* Power-Up Notification */}
+        {getPowerUpText() && (
+          <div className="mt-4 text-center animate-bounce">
+            <div className={`inline-block px-4 py-2 rounded-lg ${
+              getPowerUpText()?.type === 'rare' 
+                ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/50' 
+                : 'bg-gradient-to-r from-blue-500/30 to-cyan-500/30 border border-blue-400/50'
+            }`}>
+              <div className="flex items-center justify-center space-x-2">
+                <span className="text-lg">
+                  {getPowerUpText()?.type === 'rare' ? '🌟' : '✨'}
+                </span>
+                <span className={`font-bold ${
+                  getPowerUpText()?.type === 'rare' 
+                    ? 'text-purple-300' 
+                    : 'text-blue-300'
+                }`}>
+                  {getPowerUpText()?.text} Unlocked!
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      
         {/* Chaos intensity indicator */}
         <div className="mt-6 space-y-3">
           <div className="text-center">

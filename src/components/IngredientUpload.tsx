@@ -51,16 +51,33 @@ export default function IngredientUpload({ onImageUpload, isAnalyzing }: Ingredi
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto">
-      <div className="text-center mb-8">
-        <h2 className="text-4xl font-bold text-white mb-4 flex items-center justify-center space-x-3">
-          <Camera className="text-purple-400" size={40} />
-          <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-            Upload Your Chaos Ingredients!
-          </span>
-          <Sparkles className="text-yellow-400" size={40} />
-        </h2>
-        <p className="text-xl text-white/80">Drop an image and let the AI Chef work its magic!</p>
+    <div className="w-full max-w-2xl mx-auto">      <div className="text-center mb-8">
+        <div className="border-b-2 border-purple-500/30 pb-4 mb-4">
+          <h2 className="text-4xl font-bold text-white mb-4 flex items-center justify-center space-x-3">
+            <div className="relative">
+              <Camera className="text-purple-400" size={40} />
+              <div className="absolute -top-2 -right-2 w-4 h-4 bg-yellow-400 rounded-full animate-ping opacity-70"></div>
+            </div>
+            <span className="bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              Upload Your Chaos Ingredients!
+            </span>
+            <Sparkles className="text-yellow-400" size={40} />
+          </h2>
+          <p className="text-xl text-white/80">Drop an image and earn <span className="text-yellow-400 font-bold">+50 XP</span> to begin your chaos culinary adventure!</p>
+        </div>
+        
+        {/* Game-like instruction cards */}
+        <div className="flex justify-center gap-4 text-xs">
+          <div className="px-3 py-1 bg-purple-500/20 rounded-full border border-purple-500/30 text-purple-300">
+            STEP 1: Upload food image
+          </div>
+          <div className="px-3 py-1 bg-orange-500/20 rounded-full border border-orange-500/30 text-orange-300">
+            STEP 2: Let chef analyze
+          </div>
+          <div className="px-3 py-1 bg-green-500/20 rounded-full border border-green-500/30 text-green-300">
+            STEP 3: Create chaos recipe
+          </div>
+        </div>
       </div>
 
       <div
@@ -149,18 +166,25 @@ export default function IngredientUpload({ onImageUpload, isAnalyzing }: Ingredi
                   or click to browse your culinary chaos
                 </p>
               </div>
-              
-              <button
+                <button
                 onClick={onButtonClick}
                 className="group relative px-10 py-5 bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 rounded-2xl text-white font-bold text-xl overflow-hidden transition-all duration-300 hover:scale-110 hover:shadow-2xl hover:shadow-purple-500/40"
                 disabled={isAnalyzing}
               >
                 <div className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-pulse" />
+                
+                {/* Game-like button design */}
+                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-white/30 rounded-tl-xl"></div>
+                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-white/30 rounded-br-xl"></div>
+                
                 <div className="relative flex items-center space-x-3">
                   <Upload size={24} />
                   <span>Choose Image</span>
-                  <Sparkles size={20} className="animate-pulse" />
+                  <div className="flex items-center gap-1">
+                    <Sparkles size={20} className="animate-pulse" />
+                    <span className="text-yellow-300 text-xs font-bold">+50 XP</span>
+                  </div>
                 </div>
               </button>
             </div>

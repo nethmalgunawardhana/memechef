@@ -40,8 +40,11 @@ export default function FixedStatsHeader({
               <div className="flex items-center space-x-6">
                 {/* Logo */}
                 <div className="flex items-center space-x-2">
-                  <ChefHat className="text-orange-400 w-6 h-6" />
-                  <span className="text-white font-bold text-lg">MemeChef</span>
+                  <div className="relative">
+                    <ChefHat className="text-orange-400 w-6 h-6" />
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-full animate-ping"></div>
+                  </div>
+                  <span className="font-bold text-lg bg-gradient-to-r from-orange-400 to-red-400 bg-clip-text text-transparent">MemeChef</span>
                 </div>
                 
                 {/* Quick Stats */}
