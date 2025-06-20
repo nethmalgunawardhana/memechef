@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Trophy, Star, Crown, Target, Award, Medal, Sparkles } from 'lucide-react';
 
 interface Achievement {
@@ -16,6 +16,8 @@ interface AchievementsProps {
   recipeCount: number;
   chaosCount: number;
   shareCount: number;
+  playerLevel: number;
+  playerXP: number;
   historicalRating?: string;
 }
 
@@ -23,11 +25,14 @@ export default function Achievements({
   recipeCount, 
   chaosCount, 
   shareCount, 
+  playerLevel,
+  playerXP,
   historicalRating 
 }: AchievementsProps) {
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [newlyUnlocked, setNewlyUnlocked] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const previousAchievements = useRef<Achievement[]>([]);
 
   useEffect(() => {
     const allAchievements: Achievement[] = [
@@ -104,10 +109,39 @@ export default function Achievements({
         progress: chaosCount,
         maxProgress: 25,
         rarity: 'legendary'
-      }
-    ];
+      },
+      {
+        id: 'level-5-master',
+        title: 'Culinary Master',
+        description: 'Reach level 5',
+        emoji: '👑',
+        unlocked: playerLevel >= 5,
+        progress: playerLevel,
+        maxProgress: 5,
+        rarity: 'epic'
+      },
+      {
+        id: 'xp-millionaire',
+        title: 'XP Millionaire',
+        description: 'Earn 1,000 XP points',
+        emoji: '💰',
+        unlocked: playerXP >= 1000,
+        progress: playerXP,
+        maxProgress: 1000,
+        rarity: 'rare'
+      },
+      {
+        id: 'level-7-legend',
+        title: 'Chaos Culinary Legend',
+        description: 'Reach the maximum level (7)',
+        emoji: '🏆',
+        unlocked: playerLevel >= 7,
+        progress: playerLevel,
+        maxProgress: 7,
+        rarity: 'legendary'
+      }    ];
 
-    const prevAchievements = achievements;
+    const prevAchievements = previousAchievements.current;
     const updatedAchievements = allAchievements;
     
     // Check for newly unlocked achievements
@@ -127,7 +161,8 @@ export default function Achievements({
     }
     
     setAchievements(updatedAchievements);
-  }, [recipeCount, chaosCount, shareCount, historicalRating, achievements]);
+    previousAchievements.current = updatedAchievements;
+  }, [recipeCount, chaosCount, shareCount, historicalRating, playerLevel, playerXP]);
 
   const unlockedCount = achievements.filter(a => a.unlocked).length;
   const progressPercentage = (unlockedCount / achievements.length) * 100;
@@ -222,19 +257,19 @@ export default function Achievements({
               <div className="absolute inset-0 bg-white/20 animate-pulse"></div>
             </div>
           </div>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
             {[
               { label: 'Recipes', value: recipeCount, color: 'blue', icon: '📝' },
               { label: 'Chaos Clicks', value: chaosCount, color: 'red', icon: '🌪️' },
               { label: 'Shares', value: shareCount, color: 'green', icon: '📤' },
+              { label: 'Level', value: playerLevel, color: 'yellow', icon: '⭐' },
+              { label: 'XP', value: playerXP.toLocaleString(), color: 'cyan', icon: '💎' },
               { label: 'Completed', value: unlockedCount, color: 'purple', icon: '🏆' }
             ].map((stat) => (
               <div key={stat.label} className="backdrop-blur-sm bg-white/5 border border-white/10 rounded-2xl p-4 text-center">
                 <div className="text-3xl mb-2">{stat.icon}</div>
                 <div className={`text-2xl font-bold text-${stat.color}-300 mb-1`}>{stat.value}</div>
-                <div className="text-xs text-white/60">{stat.label}</div>
-              </div>
+                <div className="text-xs text-white/60">{stat.label}</div>              </div>
             ))}
           </div>
         </div>

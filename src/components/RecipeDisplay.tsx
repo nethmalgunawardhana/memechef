@@ -1,4 +1,4 @@
-import { Clock, Users, ChefHat, Flame, Star, Sparkles } from 'lucide-react';
+import { Clock, Users, ChefHat, Flame, Star, Sparkles, Crown } from 'lucide-react';
 
 interface Recipe {
   title: string;
@@ -9,9 +9,12 @@ interface Recipe {
 
 interface RecipeDisplayProps {
   recipe: Recipe | null;
+  memeCaption?: string;
+  historicalRating?: string;
+  onGenerateCaption?: () => void;
 }
 
-export default function RecipeDisplay({ recipe }: RecipeDisplayProps) {
+export default function RecipeDisplay({ recipe, memeCaption, historicalRating, onGenerateCaption }: RecipeDisplayProps) {
   if (!recipe) {
     return (
       <div className="text-center p-12 backdrop-blur-sm bg-white/5 border border-white/10 rounded-3xl">
@@ -175,12 +178,53 @@ export default function RecipeDisplay({ recipe }: RecipeDisplayProps) {
                 <div className="text-white/80 font-medium">Chef Chaos is not responsible for kitchen explosions</div>
               </div>
             </div>
-            
-            <p className="text-white/60 text-xs italic">
+              <p className="text-white/60 text-xs italic">
               This recipe has been scientifically proven to defy at least 3 laws of physics and 7 health codes.
             </p>
           </div>
         </div>
+        
+        {/* Meme Caption Section */}
+        {memeCaption && (
+          <div className="mt-8 backdrop-blur-xl bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-400/40 rounded-3xl p-8">
+            <div className="text-center">
+              <h4 className="font-bold text-purple-300 text-2xl mb-4 flex items-center justify-center space-x-2">
+                <span>🎭</span>
+                <span>Meme Caption</span>
+                <span>🎭</span>
+              </h4>
+              <div className="backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl p-6 mb-4">
+                <p className="text-purple-100 italic text-lg leading-relaxed font-medium">
+                  &ldquo;{memeCaption}&rdquo;
+                </p>
+              </div>
+              {onGenerateCaption && (
+                <button
+                  onClick={onGenerateCaption}
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300 hover:scale-105 shadow-xl"
+                >
+                  🎲 Generate New Caption
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+        
+        {/* Historical Rating Section */}
+        {historicalRating && (
+          <div className="mt-8 backdrop-blur-xl bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-400/40 rounded-3xl p-8">
+            <h4 className="font-bold text-amber-300 text-2xl mb-4 text-center flex items-center justify-center space-x-2">
+              <Crown className="text-yellow-400" size={28} />
+              <span>Historical Review</span>
+              <Crown className="text-yellow-400" size={28} />
+            </h4>
+            <div className="backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl p-6">
+              <p className="text-amber-100 italic text-lg leading-relaxed text-center font-medium">
+                &ldquo;{historicalRating}&rdquo;
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

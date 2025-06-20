@@ -24,3 +24,289 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Game UI Animation Classes */
+@keyframes gradient-shift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-gradient-slow {
+  background-size: 400% 400%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+@keyframes float-vertical {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0); }
+}
+
+.animate-float-slow {
+  animation: float-vertical 8s ease-in-out infinite;
+}
+
+.animate-float-medium {
+  animation: float-vertical 5s ease-in-out infinite;
+}
+
+.animate-float-fast {
+  animation: float-vertical 3s ease-in-out infinite;
+}
+
+@keyframes ping-custom {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  70% { transform: scale(2); opacity: 0; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.animate-ping-slow {
+  animation: ping-custom 4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-ping-medium {
+  animation: ping-custom 3s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+.animate-ping-fast {
+  animation: ping-custom 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+@keyframes pulse-slow-custom {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow-custom 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes wiggle {
+  0%, 100% { transform: rotate(-1deg) scale(1); }
+  50% { transform: rotate(1deg) scale(1.01); }
+}
+
+.animate-wiggle {
+  animation: wiggle 0.5s ease-in-out;
+}
+
+@keyframes popup {
+  0% { transform: scale(0.8); opacity: 0; }
+  70% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/* Music control specific animations */
+@keyframes wave {
+  0% { transform: scale(1); }
+  25% { transform: scale(1.05); }
+  50% { transform: scale(1); }
+  75% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.animate-wave {
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes soundwave {
+  0% { transform: scale(1); opacity: 0.7; }
+  50% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+.animate-soundwave {
+  animation: soundwave 2s ease-in-out infinite;
+}
+
+/* Enhanced pulsing animations for music controls */
+@keyframes music-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(74, 222, 128, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+}
+
+.animate-music-pulse {
+  animation: music-pulse 2s infinite;
+}
+
+.animate-popup {
+  animation: popup 0.4s ease-out forwards;
+}
+
+@keyframes float-up {
+  0% { transform: translateY(0); opacity: 1; }
+  80% { opacity: 0.8; }
+  100% { transform: translateY(-80px); opacity: 0; }
+}
+
+.animate-float-up {
+  animation: float-up 2s ease-out forwards;
+}
+
+@keyframes bounce-slow {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-20px); }
+}
+
+.animate-bounce-slow {
+  animation: bounce-slow 3s ease-in-out infinite;
+}
+
+@keyframes bounce-in {
+  0% { transform: scale(0.8); }
+  20% { transform: scale(1.1); }
+  40% { transform: scale(0.9); }
+  60% { transform: scale(1.05); }
+  80% { transform: scale(0.98); }
+  100% { transform: scale(1); }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.8s ease-out forwards;
+}
+
+@keyframes pulse-fast {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse-fast {
+  animation: pulse-fast 1s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 5px 2px rgba(255, 255, 255, 0.2); }
+  50% { box-shadow: 0 0 20px 5px rgba(255, 255, 255, 0.4); }
+}
+
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
+}
+
+/* Custom styling for range inputs (volume sliders) */
+input[type="range"] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 5px;
+  border-radius: 5px;
+  background: linear-gradient(90deg, rgba(74, 222, 128, 0.7) 60%, rgba(255, 255, 255, 0.1) 60%);
+  outline: none;
+  transition: background 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #4ade80;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-moz-range-thumb {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #4ade80;
+  cursor: pointer;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover,
+input[type="range"]::-webkit-slider-thumb:active {
+  transform: scale(1.1);
+  background: #22c55e;
+}
+
+input[type="range"]::-moz-range-thumb:hover,
+input[type="range"]::-moz-range-thumb:active {
+  transform: scale(1.1);
+  background: #22c55e;
+}
+
+/* Inactive state for volume slider */
+input[type="range"].inactive {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 60%, rgba(255, 255, 255, 0.1) 60%);
+}
+
+input[type="range"].inactive::-webkit-slider-thumb {
+  background: #d4d4d8;
+}
+
+input[type="range"].inactive::-moz-range-thumb {
+  background: #d4d4d8;
+}
+
+/* Volume Control Styles */
+.volume-slider-active {
+  background: linear-gradient(90deg, rgba(74, 222, 128, 0.7) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-radius: 9999px;
+  height: 6px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.volume-slider-active::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4ade80;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.volume-slider-active::-webkit-slider-thumb:hover {
+  background: #22c55e;
+  transform: scale(1.1);
+}
+
+.volume-slider-inactive {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.1) 100%);
+  border-radius: 9999px;
+  height: 6px;
+  outline: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.volume-slider-inactive::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #6b7280;
+  cursor: not-allowed;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Firefox Volume Slider */
+.volume-slider-active::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #4ade80;
+  cursor: pointer;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.volume-slider-inactive::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #6b7280;
+  cursor: not-allowed;
+  border: 2px solid #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}

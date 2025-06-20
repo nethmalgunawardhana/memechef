@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Play, Volume2, Sparkles, Zap, Crown } from 'lucide-react';
 
 interface AiChefProps {
@@ -11,6 +11,17 @@ export default function AiChef({ narration, isNarrating, onStartNarration }: AiC
   const [isAnimating, setIsAnimating] = useState(false);
   const [currentText, setCurrentText] = useState('');
   const [chefMood, setChefMood] = useState('idle');
+  const [showChefKissEmoji, setShowChefKissEmoji] = useState(false);
+  
+  // Sound effect reference
+  const kissSound = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize sound effects
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      kissSound.current = new Audio('/sounds/chef-kiss.mp3');
+    }
+  }, []);
 
   // Typewriter effect for narration
   useEffect(() => {
@@ -26,6 +37,19 @@ export default function AiChef({ narration, isNarrating, onStartNarration }: AiC
         } else {
           clearInterval(timer);
           setIsAnimating(false);
+          
+          // Show chef's kiss emoji after narration ends and play sound
+          setTimeout(() => {
+            setShowChefKissEmoji(true);
+            if (kissSound.current) {
+              kissSound.current.play().catch(console.error);
+            }
+            
+            // Hide the emoji after 2 seconds
+            setTimeout(() => {
+              setShowChefKissEmoji(false);
+            }, 2000);
+          }, 500);
         }
       }, 50);
 
@@ -69,7 +93,15 @@ export default function AiChef({ narration, isNarrating, onStartNarration }: AiC
           </span>
           <Crown className="text-yellow-400 animate-bounce" size={36} />
         </h2>
-        <p className="text-xl text-white/80">Your unhinged culinary guide to absolute madness</p>
+        <p className="text-xl text-white/80 relative">
+          Your unhinged culinary guide to absolute madness
+          {/* Chef's kiss emoji that appears after narration ends */}
+          {showChefKissEmoji && (
+            <span className="absolute top-0 right-0 transform translate-x-12 -translate-y-1 text-3xl animate-bounce">
+              👨‍🍳👌
+            </span>
+          )}
+        </p>
       </div>
 
       <div className="backdrop-blur-xl bg-gradient-to-br from-orange-500/10 via-red-500/10 to-pink-500/10 border border-orange-400/30 rounded-3xl p-8 shadow-2xl shadow-orange-500/20">
@@ -98,7 +130,7 @@ export default function AiChef({ narration, isNarrating, onStartNarration }: AiC
             {/* Floating emojis around chef */}
             {isNarrating && (
               <div className="absolute inset-0 pointer-events-none">
-                {['💫', '✨', '🌟', '🔥'].map((emoji, i) => (
+                {['💫', '✨', '🌟', '🔥', '🎵', '🧂'].map((emoji, i) => (
                   <div
                     key={i}
                     className="absolute text-2xl animate-ping"

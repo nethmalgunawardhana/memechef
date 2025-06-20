@@ -1,16 +1,19 @@
 import { useState } from 'react';
 import { Shuffle, Zap, Skull, AlertTriangle, Flame } from 'lucide-react';
+import { soundManager } from '@/services/soundManager';
 
 interface ChaosButtonProps {
-  onChaosClick: () => void;
+  onClick: () => void;
   isLoading: boolean;
-  disabled: boolean;
+  chaosCount: number;
+  disabled?: boolean;
 }
 
-export default function ChaosButton({ onChaosClick, isLoading, disabled }: ChaosButtonProps) {
-  const [clickCount, setClickCount] = useState(0);
+export default function ChaosButton({ onClick, isLoading, chaosCount, disabled = false }: ChaosButtonProps) {  const [clickCount, setClickCount] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [particles, setParticles] = useState<Array<{ id: number; emoji: string; x: number; y: number }>>([]);
+  
+  // No need for sound management here, using sound manager
 
   const handleClick = () => {
     if (disabled || isLoading) return;
@@ -18,8 +21,11 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
     setClickCount(prev => prev + 1);
     setIsShaking(true);
     
+    // Play chaos button sound using sound manager
+    soundManager.playSound('chaosButton');
+    
     // Create particle explosion
-    const newParticles = Array.from({ length: 8 }, (_, i) => ({
+    const newParticles = Array.from({ length: 12 }, (_, i) => ({
       id: Date.now() + i,
       emoji: getRandomEmoji(),
       x: Math.random() * 100,
@@ -33,28 +39,55 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
       setParticles([]);
     }, 1000);
     
-    onChaosClick();
+    onClick();
   };
-
   const getChaosLevel = () => {
-    if (clickCount === 0) return { level: 'DORMANT', intensity: 0, color: 'gray' };
-    if (clickCount < 3) return { level: 'MILD CHAOS', intensity: 1, color: 'yellow' };
-    if (clickCount < 5) return { level: 'MODERATE MADNESS', intensity: 2, color: 'orange' };
-    if (clickCount < 10) return { level: 'EXTREME CHAOS', intensity: 3, color: 'red' };
+    if (chaosCount === 0) return { level: 'DORMANT', intensity: 0, color: 'gray' };
+    if (chaosCount < 3) return { level: 'MILD CHAOS', intensity: 1, color: 'yellow' };
+    if (chaosCount < 5) return { level: 'MODERATE MADNESS', intensity: 2, color: 'orange' };
+    if (chaosCount < 10) return { level: 'EXTREME CHAOS', intensity: 3, color: 'red' };
     return { level: 'APOCALYPTIC ABSURDITY', intensity: 4, color: 'purple' };
   };
 
   const getButtonText = () => {
     if (isLoading) return 'SUMMONING CHAOS...';
-    if (clickCount === 0) return 'UNLEASH CHAOS';
-    if (clickCount < 5) return `MORE CHAOS! (${clickCount})`;
-    if (clickCount < 10) return `EXTREME CHAOS! (${clickCount})`;
-    return `APOCALYPSE MODE! (${clickCount})`;
+    if (chaosCount === 0) return 'UNLEASH CHAOS';
+    if (chaosCount < 5) return `MORE CHAOS! (${chaosCount})`;
+    if (chaosCount < 10) return `EXTREME CHAOS! (${chaosCount})`;
+    return `APOCALYPSE MODE! (${chaosCount})`;
   };
 
   const getRandomEmoji = () => {
-    const chaosEmojis = ['🌪️', '💥', '🔥', '⚡', '🌋', '💫', '🎭', '🎪', '🎢', '🎯', '💀', '☄️'];
+    const chaosEmojis = ['🌪️', '💥', '🔥', '⚡', '🌋', '💫', '🎭', '🎪', '🎢', '🎯', '💀', '☄️', '🎮', '🎲', '🏆', '⭐', '✨', '💯'];
     return chaosEmojis[Math.floor(Math.random() * chaosEmojis.length)];
+  };
+    const getPowerUpText = () => {
+    if (chaosCount === 0) return null;
+    
+    const powerUps = [
+      'Spice Multiplier x2',
+      'Flavor Boost +50',
+      'Recipe Absurdity +100%',
+      'Ingredient Randomizer',
+      'Time Warp Cooking',
+      'Chaos Enchantment',
+      'Taste Confusion',
+      'Gordon Ramsay Rage',
+      'Flavor Explosion',
+      'Kitchen Mayhem'
+    ];
+    
+    if (chaosCount % 3 === 0) {
+      const powerUp = powerUps[Math.floor(Math.random() * powerUps.length)];
+      return { text: powerUp, type: 'rare' };
+    }
+    
+    if (chaosCount % 2 === 0) {
+      const powerUp = powerUps[Math.floor(Math.random() * 5)];
+      return { text: powerUp, type: 'common' };
+    }
+    
+    return null;
   };
 
   const chaosStatus = getChaosLevel();
@@ -83,9 +116,14 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
           </span>
           <Zap className="text-yellow-400 animate-pulse" size={36} />
         </h3>
-        
-        <div className="backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+          <div className="backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl p-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-sm text-white/70 mb-1">Total Clicks</div>
+              <div className="font-bold text-lg text-cyan-400">
+                {chaosCount}
+              </div>
+            </div>
             <div>
               <div className="text-sm text-white/70 mb-1">Current Level</div>
               <div className={`font-bold text-lg text-${chaosStatus.color}-400`}>
@@ -172,8 +210,30 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
               chaosStatus.intensity >= 3 ? 'bg-white/10' : 'bg-white/5'
             }`}></div>
           </button>
-        </div>
-
+        </div>        {/* Power-Up Notification */}
+        {getPowerUpText() && (
+          <div className="mt-4 text-center animate-bounce">
+            <div className={`inline-block px-4 py-2 rounded-lg ${
+              getPowerUpText()?.type === 'rare' 
+                ? 'bg-gradient-to-r from-purple-500/30 to-pink-500/30 border border-purple-400/50' 
+                : 'bg-gradient-to-r from-blue-500/30 to-cyan-500/30 border border-blue-400/50'
+            }`}>
+              <div className="flex items-center justify-center space-x-2">
+                <span className="text-lg">
+                  {getPowerUpText()?.type === 'rare' ? '🌟' : '✨'}
+                </span>
+                <span className={`font-bold ${
+                  getPowerUpText()?.type === 'rare' 
+                    ? 'text-purple-300' 
+                    : 'text-blue-300'
+                }`}>
+                  {getPowerUpText()?.text} Unlocked!
+                </span>
+              </div>
+            </div>
+          </div>
+        )}
+      
         {/* Chaos intensity indicator */}
         <div className="mt-6 space-y-3">
           <div className="text-center">
