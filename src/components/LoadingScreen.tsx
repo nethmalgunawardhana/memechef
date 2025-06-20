@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Music, Volume2, VolumeX } from 'lucide-react';
 
+// Extend Window interface to include webkitAudioContext
+interface WindowWithWebkitAudioContext extends Window {
+  webkitAudioContext?: typeof AudioContext;
+}
+
 interface LoadingScreenProps {
   progress: number;
 }
@@ -158,13 +163,12 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({ progress }) => {
                 <span className={`font-mono ${typeof Audio !== 'undefined' ? "text-green-400" : "text-red-400"}`}>
                   {typeof Audio !== 'undefined' ? "Available ✓" : "Not Available ✗"}
                 </span>
-              </div>
-              <div className="flex justify-between">
+              </div>              <div className="flex justify-between">
                 <span>AudioContext: </span>
                 <span className={`font-mono ${typeof window !== 'undefined' && 
-                  (window.AudioContext || (window as any).webkitAudioContext) ? "text-green-400" : "text-yellow-300"}`}>
+                  (window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext) ? "text-green-400" : "text-yellow-300"}`}>
                   {typeof window !== 'undefined' && 
-                   (window.AudioContext || (window as any).webkitAudioContext) ? "Available ✓" : "Limited ⚠️"}
+                   (window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext) ? "Available ✓" : "Limited ⚠️"}
                 </span>
               </div>
             </div>

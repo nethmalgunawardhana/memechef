@@ -2,12 +2,13 @@ import { useState, useRef, useEffect } from 'react';
 import { Shuffle, Zap, Skull, AlertTriangle, Flame } from 'lucide-react';
 
 interface ChaosButtonProps {
-  onChaosClick: () => void;
+  onClick: () => void;
   isLoading: boolean;
-  disabled: boolean;
+  chaosCount: number;
+  disabled?: boolean;
 }
 
-export default function ChaosButton({ onChaosClick, isLoading, disabled }: ChaosButtonProps) {
+export default function ChaosButton({ onClick, isLoading, chaosCount, disabled = false }: ChaosButtonProps) {
   const [clickCount, setClickCount] = useState(0);
   const [isShaking, setIsShaking] = useState(false);
   const [particles, setParticles] = useState<Array<{ id: number; emoji: string; x: number; y: number }>>([]);
@@ -49,32 +50,30 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
       setParticles([]);
     }, 1000);
     
-    onChaosClick();
+    onClick();
   };
-
   const getChaosLevel = () => {
-    if (clickCount === 0) return { level: 'DORMANT', intensity: 0, color: 'gray' };
-    if (clickCount < 3) return { level: 'MILD CHAOS', intensity: 1, color: 'yellow' };
-    if (clickCount < 5) return { level: 'MODERATE MADNESS', intensity: 2, color: 'orange' };
-    if (clickCount < 10) return { level: 'EXTREME CHAOS', intensity: 3, color: 'red' };
+    if (chaosCount === 0) return { level: 'DORMANT', intensity: 0, color: 'gray' };
+    if (chaosCount < 3) return { level: 'MILD CHAOS', intensity: 1, color: 'yellow' };
+    if (chaosCount < 5) return { level: 'MODERATE MADNESS', intensity: 2, color: 'orange' };
+    if (chaosCount < 10) return { level: 'EXTREME CHAOS', intensity: 3, color: 'red' };
     return { level: 'APOCALYPTIC ABSURDITY', intensity: 4, color: 'purple' };
   };
 
   const getButtonText = () => {
     if (isLoading) return 'SUMMONING CHAOS...';
-    if (clickCount === 0) return 'UNLEASH CHAOS';
-    if (clickCount < 5) return `MORE CHAOS! (${clickCount})`;
-    if (clickCount < 10) return `EXTREME CHAOS! (${clickCount})`;
-    return `APOCALYPSE MODE! (${clickCount})`;
+    if (chaosCount === 0) return 'UNLEASH CHAOS';
+    if (chaosCount < 5) return `MORE CHAOS! (${chaosCount})`;
+    if (chaosCount < 10) return `EXTREME CHAOS! (${chaosCount})`;
+    return `APOCALYPSE MODE! (${chaosCount})`;
   };
 
   const getRandomEmoji = () => {
     const chaosEmojis = ['🌪️', '💥', '🔥', '⚡', '🌋', '💫', '🎭', '🎪', '🎢', '🎯', '💀', '☄️', '🎮', '🎲', '🏆', '⭐', '✨', '💯'];
     return chaosEmojis[Math.floor(Math.random() * chaosEmojis.length)];
   };
-  
-  const getPowerUpText = () => {
-    if (clickCount === 0) return null;
+    const getPowerUpText = () => {
+    if (chaosCount === 0) return null;
     
     const powerUps = [
       'Spice Multiplier x2',
@@ -89,12 +88,12 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
       'Kitchen Mayhem'
     ];
     
-    if (clickCount % 3 === 0) {
+    if (chaosCount % 3 === 0) {
       const powerUp = powerUps[Math.floor(Math.random() * powerUps.length)];
       return { text: powerUp, type: 'rare' };
     }
     
-    if (clickCount % 2 === 0) {
+    if (chaosCount % 2 === 0) {
       const powerUp = powerUps[Math.floor(Math.random() * 5)];
       return { text: powerUp, type: 'common' };
     }
@@ -128,9 +127,14 @@ export default function ChaosButton({ onChaosClick, isLoading, disabled }: Chaos
           </span>
           <Zap className="text-yellow-400 animate-pulse" size={36} />
         </h3>
-        
-        <div className="backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl p-4 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+          <div className="backdrop-blur-sm bg-white/10 border border-white/20 rounded-2xl p-4 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+            <div>
+              <div className="text-sm text-white/70 mb-1">Total Clicks</div>
+              <div className="font-bold text-lg text-cyan-400">
+                {chaosCount}
+              </div>
+            </div>
             <div>
               <div className="text-sm text-white/70 mb-1">Current Level</div>
               <div className={`font-bold text-lg text-${chaosStatus.color}-400`}>

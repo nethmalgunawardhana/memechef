@@ -5,10 +5,11 @@ import { Recipe } from '@/services/geminiService';
 interface ShareRecipeProps {
   recipe: Recipe | null;
   memeCaption: string;
-  onGenerateCaption: () => void;
+  onShare?: () => void;
+  onGenerateCaption?: () => void;
 }
 
-export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: ShareRecipeProps) {
+export default function ShareRecipe({ recipe, memeCaption, onShare, onGenerateCaption }: ShareRecipeProps) {
   const [isGeneratingImage, setIsGeneratingImage] = useState(false);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [copiedToClipboard, setCopiedToClipboard] = useState(false);
@@ -51,7 +52,6 @@ export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: 
       console.error('Failed to copy to clipboard:', error);
     }
   };
-
   const shareToSocial = (platform: string) => {
     const text = encodeURIComponent(memeCaption);
     const hashtags = encodeURIComponent('MemeChef ChaosRecipe AIChef AbsurdCooking CulinaryChaos');
@@ -64,10 +64,12 @@ export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: 
       case 'instagram':
         copyToClipboard(`${memeCaption} #${hashtags.replace(/%20/g, ' #')}`);
         alert('Caption copied to clipboard! Open Instagram and paste it with your recipe image.');
+        onShare?.(); // Call onShare callback
         return;
       case 'tiktok':
         copyToClipboard(`${memeCaption} #${hashtags.replace(/%20/g, ' #')}`);
         alert('Caption copied to clipboard! Open TikTok and paste it with your recipe video.');
+        onShare?.(); // Call onShare callback
         return;
       case 'facebook':
         url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}&quote=${text}`;
@@ -76,6 +78,7 @@ export default function ShareRecipe({ recipe, memeCaption, onGenerateCaption }: 
     
     if (url) {
       window.open(url, '_blank', 'width=600,height=400');
+      onShare?.(); // Call onShare callback
     }
   };
 
