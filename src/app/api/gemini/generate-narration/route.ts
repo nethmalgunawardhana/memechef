@@ -3,11 +3,18 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+interface Recipe {
+  title?: string;
+  ingredients?: string[];
+  instructions?: string[];
+  backstory?: string;
+}
+
 // Cache for narrations
 const narrationCache = new Map<string, { data: string; timestamp: number }>();
 const CACHE_DURATION = 45 * 60 * 1000; // 45 minutes
 
-function getNarrationKey(recipe: any): string {
+function getNarrationKey(recipe: Recipe): string {
   return `narr_${recipe.title?.slice(0, 20) || 'unknown'}`;
 }
 
@@ -33,7 +40,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();    const { recipe } = body;
+    const body = await request.json() as { recipe: Recipe };
+    const { recipe } = body;
 
     if (!recipe) {
       return NextResponse.json(

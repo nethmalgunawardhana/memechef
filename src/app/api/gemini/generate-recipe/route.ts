@@ -3,15 +3,27 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+interface Recipe {
+  title: string;
+  backstory: string;
+  ingredients: string[];
+  instructions: string[];
+}
+
+interface CacheEntry {
+  data: Recipe;
+  timestamp: number;
+}
+
 // Simple in-memory cache
-const cache = new Map<string, { data: any; timestamp: number }>();
+const cache = new Map<string, CacheEntry>();
 const CACHE_DURATION = 60 * 60 * 1000; // 1 hour
 
 function getCacheKey(ingredients: string[]): string {
   return ingredients.sort().join(',').toLowerCase();
 }
 
-function getFromCache(key: string): any | null {
+function getFromCache(key: string): Recipe | null {
   const cached = cache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return cached.data;
@@ -20,7 +32,7 @@ function getFromCache(key: string): any | null {
   return null;
 }
 
-function setCache(key: string, data: any): void {
+function setCache(key: string, data: Recipe): void {
   cache.set(key, { data, timestamp: Date.now() });
 }
 
@@ -33,7 +45,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();    const { ingredients } = body;
+    const body = await request.json() as { ingredients: string[] };
+    const { ingredients } = body;
 
     if (!ingredients || !Array.isArray(ingredients)) {
       return NextResponse.json(
@@ -74,9 +87,8 @@ export async function POST(request: NextRequest) {
       setCache(cacheKey, recipe);
       return NextResponse.json(recipe);
     }
-    
-    // Fallback recipe
-    return NextResponse.json({
+      // Fallback recipe
+    const fallbackRecipe: Recipe = {
       title: "The Catastrophic Chaos Casserole",
       backstory: "Invented in 1420 by a wizard-chef who forgot salt and accidentally used dragon tears instead.",
       ingredients: ingredients.map(ing => `2 cups of confused ${ing}`),
@@ -86,25 +98,30 @@ export async function POST(request: NextRequest) {
         "Cook until it looks like abstract art",
         "Serve to your enemies"
       ]
-    });
-  } catch (error) {
+    };
+    return NextResponse.json(fallbackRecipe);  } catch (error) {
     console.error('Error generating recipe:', error);
     
-    const { ingredients: fallbackIngredients } = await request.json().catch(() => ({ ingredients: ['unknown ingredient'] }));
+    let fallbackIngredients: string[] = ['unknown ingredient'];
+    try {
+      const errorBody = await request.json() as { ingredients?: string[] };
+      fallbackIngredients = errorBody.ingredients || fallbackIngredients;
+    } catch {
+      // Use default fallback ingredients
+    }
     
-    return NextResponse.json(
-      {
-        title: "The Recipe of Mysterious Doom",
-        backstory: "Born from the chaos of a broken AI chef's dreams.",
-        ingredients: fallbackIngredients?.map((ing: string) => `Some amount of ${ing} (measurement lost to time)`) || ['Some mystery ingredient'],
-        instructions: [
-          "Do something with the ingredients",
-          "Hope for the best",
-          "Pray to the cooking gods",
-          "Serve with extreme caution"
-        ]
-      },
-      { status: 500 }
-    );
+    const errorRecipe: Recipe = {
+      title: "The Recipe of Mysterious Doom",
+      backstory: "Born from the chaos of a broken AI chef's dreams.",
+      ingredients: fallbackIngredients.map((ing: string) => `Some amount of ${ing} (measurement lost to time)`),
+      instructions: [
+        "Do something with the ingredients",
+        "Hope for the best",
+        "Pray to the cooking gods",
+        "Serve with extreme caution"
+      ]
+    };
+    
+    return NextResponse.json(errorRecipe, { status: 500 });
   }
 }

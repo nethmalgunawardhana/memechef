@@ -3,15 +3,27 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+interface Recipe {
+  title: string;
+  ingredients: string[];
+  instructions: string[];
+  backstory?: string;
+}
+
+interface CacheEntry {
+  data: Recipe;
+  timestamp: number;
+}
+
 // Simple cache for chaos recipes
-const chaosCache = new Map<string, { data: any; timestamp: number }>();
+const chaosCache = new Map<string, CacheEntry>();
 const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
 
-function getChaosKey(recipe: any): string {
+function getChaosKey(recipe: Recipe): string {
   return `${recipe.title}_${recipe.ingredients?.length || 0}`;
 }
 
-function getCachedChaos(key: string): any | null {
+function getCachedChaos(key: string): Recipe | null {
   const cached = chaosCache.get(key);
   if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
     return cached.data;
@@ -20,7 +32,7 @@ function getCachedChaos(key: string): any | null {
   return null;
 }
 
-function setChaosCache(key: string, data: any): void {
+function setChaosCache(key: string, data: Recipe): void {
   chaosCache.set(key, { data, timestamp: Date.now() });
 }
 
@@ -33,7 +45,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();    const { currentRecipe } = body;
+    const body = await request.json() as { currentRecipe: Recipe };
+    const { currentRecipe } = body;
 
     if (!currentRecipe) {
       return NextResponse.json(
@@ -67,9 +80,8 @@ export async function POST(request: NextRequest) {
       setChaosCache(cacheKey, chaosRecipe);
       return NextResponse.json(chaosRecipe);
     }
-    
-    // Fallback chaos mutation
-    return NextResponse.json({
+      // Fallback chaos mutation
+    const fallbackRecipe: Recipe = {
       ...currentRecipe,
       title: `CHAOTIC ${currentRecipe.title}`,
       ingredients: currentRecipe.ingredients.map((ing: string) => `${ing} + essence of pure chaos`),
@@ -79,20 +91,24 @@ export async function POST(request: NextRequest) {
         "Ask a nearby pigeon for cooking advice",
         "Replace all water with tears of laughter"
       ]
-    });
-  } catch (error) {
+    };
+    return NextResponse.json(fallbackRecipe);  } catch (error) {
     console.error('Error mutating recipe:', error);
+    const errorRecipe: Recipe = {
+      title: "CHAOTIC Recipe of Doom",
+      backstory: "Born from pure chaos when the AI chef had a meltdown.",
+      ingredients: ["essence of confusion", "digital tears", "pure chaos"],
+      instructions: [
+        "Accept that cooking is an illusion",
+        "Embrace the chaos",
+        "Serve with existential dread"
+      ]
+    };
+    
     return NextResponse.json(
       { 
         error: 'Failed to mutate recipe',
-        title: "CHAOTIC Recipe of Doom",
-        backstory: "Born from pure chaos when the AI chef had a meltdown.",
-        ingredients: ["essence of confusion", "digital tears", "pure chaos"],
-        instructions: [
-          "Accept that cooking is an illusion",
-          "Embrace the chaos",
-          "Serve with existential dread"
-        ]
+        ...errorRecipe
       },
       { status: 500 }
     );
