@@ -2,14 +2,14 @@
 
 // Request optimization utilities
 export class RequestOptimizer {
-  private pendingRequests = new Map<string, Promise<any>>();
+  private pendingRequests = new Map<string, Promise<unknown>>();
   private debounceTimers = new Map<string, NodeJS.Timeout>();
 
   // Prevent duplicate requests
   async deduplicateRequest<T>(key: string, requestFn: () => Promise<T>): Promise<T> {
     if (this.pendingRequests.has(key)) {
       console.log(`Deduplicating request for key: ${key}`);
-      return this.pendingRequests.get(key);
+      return this.pendingRequests.get(key) as Promise<T>;
     }
 
     const request = requestFn();

@@ -6,8 +6,19 @@ interface CacheItem<T> {
   expiresIn: number;
 }
 
+interface Recipe {
+  title: string;
+  backstory: string;
+  ingredients: string[];
+  instructions: string[];
+  description?: string;
+  cookingTime?: string;
+  difficulty?: string;
+  [key: string]: unknown;
+}
+
 class CacheService {
-  private cache = new Map<string, CacheItem<any>>();
+  private cache = new Map<string, CacheItem<unknown>>();
   private readonly DEFAULT_EXPIRE_TIME = 30 * 60 * 1000; // 30 minutes
 
   // Generate cache key from ingredients
@@ -35,7 +46,6 @@ class CacheService {
       console.warn('Failed to store in localStorage:', error);
     }
   }
-
   // Get from cache
   get<T>(key: string): T | null {
     // First check memory cache
@@ -64,7 +74,7 @@ class CacheService {
       return null;
     }
 
-    return item.data;
+    return item.data as T;
   }
 
   // Delete cache entry
@@ -76,17 +86,16 @@ class CacheService {
       console.warn('Failed to remove from localStorage:', error);
     }
   }
-
   // Cache recipe
-  cacheRecipe(ingredients: string[], recipe: any): void {
+  cacheRecipe(ingredients: string[], recipe: Recipe): void {
     const key = this.generateKey(ingredients, 'recipe');
     this.set(key, recipe, 60 * 60 * 1000); // 1 hour for recipes
   }
 
   // Get cached recipe
-  getCachedRecipe(ingredients: string[]): any | null {
+  getCachedRecipe(ingredients: string[]): Recipe | null {
     const key = this.generateKey(ingredients, 'recipe');
-    return this.get(key);
+    return this.get<Recipe>(key);
   }
 
   // Cache narration
