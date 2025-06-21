@@ -1,6 +1,10 @@
 // Frontend service for communicating with backend API routes
 // No longer using direct Gemini API calls for security
 
+import { cacheService } from './cacheService';
+import { usageTracker } from './usageTracker';
+import { requestOptimizer } from './requestOptimizer';
+
 export interface Recipe {
   title: string;
   backstory: string;
@@ -27,6 +31,15 @@ async function fileToBase64(file: File): Promise<string> {
 
 export async function analyzeIngredients(imageFile: File): Promise<IngredientAnalysis> {
   try {
+    // Create a simple hash of the image for caching (size + name + type)
+    const imageHash = `${imageFile.size}_${imageFile.name}_${imageFile.type}`;
+    const cachedResult = cacheService.get<IngredientAnalysis>(`ingredients_${imageHash}`);
+    
+    if (cachedResult) {
+      console.log('Using cached ingredient analysis');
+      return cachedResult;
+    }
+
     const imageBase64 = await fileToBase64(imageFile);
     
     const response = await fetch('/api/gemini/analyze-ingredients', {
@@ -45,6 +58,10 @@ export async function analyzeIngredients(imageFile: File): Promise<IngredientAna
     }
 
     const result = await response.json();
+    
+    // Cache the result for 2 hours
+    cacheService.set(`ingredients_${imageHash}`, result, 2 * 60 * 60 * 1000);
+    
     return result;
   } catch (error) {
     console.error('Error analyzing ingredients:', error);
@@ -57,6 +74,13 @@ export async function analyzeIngredients(imageFile: File): Promise<IngredientAna
 
 export async function generateAbsurdRecipe(ingredients: string[]): Promise<Recipe> {
   try {
+    // Check cache first
+    const cachedRecipe = cacheService.getCachedRecipe(ingredients);
+    if (cachedRecipe) {
+      console.log('Using cached recipe');
+      return cachedRecipe;
+    }
+
     const response = await fetch('/api/gemini/generate-recipe', {
       method: 'POST',
       headers: {
@@ -69,9 +93,14 @@ export async function generateAbsurdRecipe(ingredients: string[]): Promise<Recip
 
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
-    }
-
-    const result = await response.json();
+    }    const result = await response.json();
+    
+    // Track API usage
+    usageTracker.trackGeminiCall(result.tokensUsed || 0);
+    
+    // Cache the result
+    cacheService.cacheRecipe(ingredients, result);
+    
     return result;
   } catch (error) {
     console.error('Error generating recipe:', error);
