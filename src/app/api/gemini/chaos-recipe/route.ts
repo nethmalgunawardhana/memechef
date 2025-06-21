@@ -3,6 +3,39 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+interface Recipe {
+  title: string;
+  ingredients: string[];
+  instructions: string[];
+  backstory?: string;
+}
+
+interface CacheEntry {
+  data: Recipe;
+  timestamp: number;
+}
+
+// Simple cache for chaos recipes
+const chaosCache = new Map<string, CacheEntry>();
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+function getChaosKey(recipe: Recipe): string {
+  return `${recipe.title}_${recipe.ingredients?.length || 0}`;
+}
+
+function getCachedChaos(key: string): Recipe | null {
+  const cached = chaosCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  chaosCache.delete(key);
+  return null;
+}
+
+function setChaosCache(key: string, data: Recipe): void {
+  chaosCache.set(key, { data, timestamp: Date.now() });
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.GEMINI_API_KEY) {
@@ -12,7 +45,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
+    const body = await request.json() as { currentRecipe: Recipe };
     const { currentRecipe } = body;
 
     if (!currentRecipe) {
@@ -22,34 +55,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    
-    const prompt = `
-      Take this recipe and make it EVEN MORE CHAOTIC and absurd:
-      ${JSON.stringify(currentRecipe)}
+    // Check cache first
+    const cacheKey = getChaosKey(currentRecipe);
+    const cached = getCachedChaos(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });const prompt = `
+      Make this recipe funnier and sillier: ${JSON.stringify(currentRecipe)}
       
-      Add more chaos by:
-      - Replacing normal ingredients with impossible ones ("tears of joy", "essence of confusion")
-      - Adding impossible cooking steps ("summon a goblin for taste testing")
-      - Making measurements even more ridiculous
-      - Adding mystical elements
-      
-      Return in the same JSON format but make it more unhinged!
+      Add silly ingredients and funny steps. Keep it simple and easy to understand.
+      Return same JSON format.
     `;
 
     const result = await model.generateContent([prompt]);
     const response = await result.response;
     const text = response.text();
-    
-    // Extract JSON from response
+      // Extract JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const chaosRecipe = JSON.parse(jsonMatch[0]);
+      // Cache the result
+      setChaosCache(cacheKey, chaosRecipe);
       return NextResponse.json(chaosRecipe);
     }
-    
-    // Fallback chaos mutation
-    return NextResponse.json({
+      // Fallback chaos mutation
+    const fallbackRecipe: Recipe = {
       ...currentRecipe,
       title: `CHAOTIC ${currentRecipe.title}`,
       ingredients: currentRecipe.ingredients.map((ing: string) => `${ing} + essence of pure chaos`),
@@ -59,20 +91,24 @@ export async function POST(request: NextRequest) {
         "Ask a nearby pigeon for cooking advice",
         "Replace all water with tears of laughter"
       ]
-    });
-  } catch (error) {
+    };
+    return NextResponse.json(fallbackRecipe);  } catch (error) {
     console.error('Error mutating recipe:', error);
+    const errorRecipe: Recipe = {
+      title: "CHAOTIC Recipe of Doom",
+      backstory: "Born from pure chaos when the AI chef had a meltdown.",
+      ingredients: ["essence of confusion", "digital tears", "pure chaos"],
+      instructions: [
+        "Accept that cooking is an illusion",
+        "Embrace the chaos",
+        "Serve with existential dread"
+      ]
+    };
+    
     return NextResponse.json(
       { 
         error: 'Failed to mutate recipe',
-        title: "CHAOTIC Recipe of Doom",
-        backstory: "Born from pure chaos when the AI chef had a meltdown.",
-        ingredients: ["essence of confusion", "digital tears", "pure chaos"],
-        instructions: [
-          "Accept that cooking is an illusion",
-          "Embrace the chaos",
-          "Serve with existential dread"
-        ]
+        ...errorRecipe
       },
       { status: 500 }
     );

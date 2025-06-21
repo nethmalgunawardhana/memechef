@@ -17,6 +17,7 @@ import MusicControl from "@/components/MusicControl";
 import MusicTip from "@/components/MusicTip";
 import ComboCounter from "@/components/ComboCounter";
 import LevelUpNotification from "@/components/LevelUpNotification";
+import OnboardingGuide, { useOnboardingKeyboard } from "@/components/OnboardingGuide";
 import { 
   analyzeIngredients, 
   generateAbsurdRecipe, 
@@ -51,13 +52,22 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   const [isNarrating, setIsNarrating] = useState(false);
-  const [isChaosLoading, setIsChaosLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isChaosLoading, setIsChaosLoading] = useState(false);  const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   
   // Stats for achievements
   const [recipeCount, setRecipeCount] = useState(0);
   const [chaosCount, setChaosCount] = useState(0);
   const [shareCount, setShareCount] = useState(0);
+
+  // Initialize client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Game mechanics
   const [playerXP, setPlayerXP] = useState(0);
@@ -68,16 +78,43 @@ export default function Home() {
   const [gameEffects, setGameEffects] = useState<Array<{id: number, type: 'success' | 'bonus' | 'level-up', message: string}>>([]);
   const [comboTimer, setComboTimer] = useState<NodeJS.Timeout | null>(null);  // Background music state
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
-  const [musicVolume, setMusicVolume] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedVolume = localStorage.getItem('memechef-music-volume');
-      return savedVolume ? parseFloat(savedVolume) : 0.3;
-    }
-    return 0.3;
-  });
-  
-  const [, setUserHasInteracted] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.3);  const [, setUserHasInteracted] = useState(false);
   const [showMusicTip, setShowMusicTip] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Check if user is new (first time visitor)
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('memechef-onboarding-seen');
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
+  // Initialize music volume from localStorage after component mounts
+  useEffect(() => {
+    const savedVolume = localStorage.getItem('memechef-music-volume');
+    if (savedVolume) {
+      setMusicVolume(parseFloat(savedVolume));
+    }
+  }, []);
+
+  // Onboarding handlers
+  const handleOnboardingClose = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('memechef-onboarding-seen', 'true');
+  };
+
+  const handleOnboardingSkip = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('memechef-onboarding-seen', 'true');
+  };
+
+  // Keyboard navigation for onboarding
+  useOnboardingKeyboard(
+    showOnboarding,
+    () => {}, // handled internally by component
+    () => {}, // handled internally by component
+    handleOnboardingClose
+  );
   const [audioLoadingStatus, setAudioLoadingStatus] = useState<Record<string, string>>({});  // Save music settings
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -101,14 +138,8 @@ export default function Home() {
       soundManager.updateConfig(!isMusicPlaying, musicVolume);
     }
   }, [musicVolume, isMusicPlaying]);
-
   // Loading screen
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Removed the duplicate loading screen useEffect since it's now combined with isClient
 
   // Load/save stats
   useEffect(() => {
@@ -293,20 +324,26 @@ export default function Home() {
     } catch (error) {
       console.error('Error processing image:', error);
       setComboChain(0);
-      
-      const fallbackRecipe: Recipe = {
-        title: "The Recipe of Technical Difficulties",
-        backstory: "Born from the chaos of AI confusion in the year 2025.",
-        ingredients: ["1 cup of patience", "2 tablespoons of hope", "A pinch of magic"],
+        const fallbackRecipe: Recipe = {
+        title: "The 'My Internet Broke' Sandwich",
+        backstory: "Created when the AI got confused and decided to take a nap instead of helping.",
+        ingredients: [
+          "2 slices of bread (any bread, we're not picky here)",
+          "Whatever's in your fridge that won't kill you",
+          "1 tablespoon of hope",
+          "A pinch of 'this will probably work out'"
+        ],
         instructions: [
-          "Mix ingredients while the AI figures itself out",
-          "Wait patiently for technology to cooperate", 
-          "Serve with understanding"
+          "Put the stuff between the bread (revolutionary, I know)",
+          "Squish it a little so it feels loved",
+          "Take a bite and pretend it's gourmet",
+          "If it tastes weird, add ketchup - ketchup fixes everything",
+          "Enjoy while questioning your life choices!"
         ]
       };
       setRecipe(fallbackRecipe);
-      setNarration("Well, this is awkward! Seems like my AI brain had a little hiccup. But hey, that's just more chaos for the recipe!");
-      setMemeCaption("When the AI chef has an existential crisis mid-recipe 🤖💭");
+      setNarration("Oops! Looks like my AI brain took a little vacation there! But hey, at least we can make a sandwich, right? Sometimes the simplest things are the best things. Plus, I bet this sandwich has more personality than most fancy restaurant food!");
+      setMemeCaption("When the AI chef.exe stops working but you're still hungry 🤖🥪");
     } finally {
       setIsAnalyzing(false);
       setIsGeneratingRecipe(false);
@@ -393,8 +430,7 @@ export default function Home() {
       console.error('Error generating caption:', error);
     }
   };
-
-  if (isLoading) {
+  if (!isClient || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center">
         <div className="text-center">
@@ -407,12 +443,18 @@ export default function Home() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white relative overflow-hidden">
       <AnimatedBackground />
       
-      <FixedStatsHeader 
+      {/* Onboarding Guide */}
+      <OnboardingGuide
+        isOpen={showOnboarding}
+        onClose={handleOnboardingClose}
+        onSkip={handleOnboardingSkip}
+      />
+      
+      <FixedStatsHeader
         recipeCount={recipeCount}
         chaosCount={chaosCount}
         shareCount={shareCount}
@@ -497,11 +539,11 @@ export default function Home() {
             </div>
             <h2 className="text-2xl font-bold mt-2">Select Your Ingredients</h2>
           </div>
-          
-          <GlassCard 
+            <GlassCard 
             className="p-8" 
             rarity={recipeCount >= 10 ? 'legendary' : recipeCount >= 5 ? 'epic' : recipeCount >= 3 ? 'rare' : 'common'}
             glow={recipeCount >= 5}
+            data-tutorial="ingredient-upload"
           >
             <IngredientUpload 
               onImageUpload={handleImageUpload}
@@ -517,11 +559,11 @@ export default function Home() {
             </div>
             <h2 className="text-2xl font-bold mt-2">Meet Your Culinary Guide</h2>
           </div>
-          
-          <GlassCard 
+            <GlassCard 
             className="p-8" 
             rarity={chaosCount >= 5 ? 'epic' : chaosCount >= 3 ? 'rare' : 'common'} 
             pulse={isNarrating}
+            data-tutorial="ai-chef"
           >
             <AiChef 
               narration={narration}
@@ -570,7 +612,7 @@ export default function Home() {
               <h2 className="text-2xl font-bold mt-2">Embrace the Chaos</h2>
             </div>
             
-            <GlassCard className="p-8 text-center" rarity="legendary" glow pulse>              <ChaosButton 
+            <GlassCard className="p-8 text-center" rarity="legendary" glow pulse data-tutorial="chaos-button">              <ChaosButton 
                 onClick={handleChaosClick}
                 isLoading={isChaosLoading}
                 chaosCount={chaosCount}
@@ -587,9 +629,8 @@ export default function Home() {
               </div>
               <h2 className="text-2xl font-bold mt-2">Share the Madness</h2>
             </div>
-            
-            <GlassCard className="p-8">
-              <ShareRecipe 
+              <GlassCard className="p-8" data-tutorial="share-recipe">
+              <ShareRecipe
                 recipe={recipe}
                 memeCaption={memeCaption}
                 onShare={() => setShareCount(prev => prev + 1)}

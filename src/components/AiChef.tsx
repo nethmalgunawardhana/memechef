@@ -16,6 +16,11 @@ export default function AiChef({ narration, isNarrating, onStartNarration }: AiC
   // Sound effect reference
   const kissSound = useRef<HTMLAudioElement | null>(null);
 
+  // Function to clean recipe text by removing asterisks
+  const cleanRecipe = (text: string) => {
+    return text.replace(/\*/g, '');
+  };
+
   // Initialize sound effects
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -29,10 +34,11 @@ export default function AiChef({ narration, isNarrating, onStartNarration }: AiC
       setIsAnimating(true);
       setCurrentText('');
       let index = 0;
+        const cleanedNarration = cleanRecipe(narration);
       
       const timer = setInterval(() => {
-        if (index < narration.length) {
-          setCurrentText(narration.slice(0, index + 1));
+        if (index < cleanedNarration.length) {
+          setCurrentText(cleanedNarration.slice(0, index + 1));
           index++;
         } else {
           clearInterval(timer);
@@ -169,10 +175,9 @@ export default function AiChef({ narration, isNarrating, onStartNarration }: AiC
               <div className="w-0 h-0 border-l-8 border-r-8 border-b-8 border-transparent border-b-white/10"></div>
             </div>
             
-            {narration ? (
-              <div className="space-y-6">
+            {narration ? (              <div className="space-y-6">
                 <div className="text-white/95 text-lg leading-relaxed font-medium">
-                  {currentText || narration}
+                  {cleanRecipe(currentText) || cleanRecipe(narration)}
                   {isAnimating && <span className="animate-pulse text-purple-400 font-bold">|</span>}
                 </div>
                 
