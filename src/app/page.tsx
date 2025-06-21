@@ -17,6 +17,7 @@ import MusicControl from "@/components/MusicControl";
 import MusicTip from "@/components/MusicTip";
 import ComboCounter from "@/components/ComboCounter";
 import LevelUpNotification from "@/components/LevelUpNotification";
+import OnboardingGuide, { useOnboardingKeyboard } from "@/components/OnboardingGuide";
 import { 
   analyzeIngredients, 
   generateAbsurdRecipe, 
@@ -77,10 +78,17 @@ export default function Home() {
   const [gameEffects, setGameEffects] = useState<Array<{id: number, type: 'success' | 'bonus' | 'level-up', message: string}>>([]);
   const [comboTimer, setComboTimer] = useState<NodeJS.Timeout | null>(null);  // Background music state
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
-  const [musicVolume, setMusicVolume] = useState(0.3);
-  const [, setUserHasInteracted] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.3);  const [, setUserHasInteracted] = useState(false);
   const [showMusicTip, setShowMusicTip] = useState(true);
+  const [showOnboarding, setShowOnboarding] = useState(false);
 
+  // Check if user is new (first time visitor)
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem('memechef-onboarding-seen');
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
+  }, []);
   // Initialize music volume from localStorage after component mounts
   useEffect(() => {
     const savedVolume = localStorage.getItem('memechef-music-volume');
@@ -88,6 +96,25 @@ export default function Home() {
       setMusicVolume(parseFloat(savedVolume));
     }
   }, []);
+
+  // Onboarding handlers
+  const handleOnboardingClose = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('memechef-onboarding-seen', 'true');
+  };
+
+  const handleOnboardingSkip = () => {
+    setShowOnboarding(false);
+    localStorage.setItem('memechef-onboarding-seen', 'true');
+  };
+
+  // Keyboard navigation for onboarding
+  useOnboardingKeyboard(
+    showOnboarding,
+    () => {}, // handled internally by component
+    () => {}, // handled internally by component
+    handleOnboardingClose
+  );
   const [audioLoadingStatus, setAudioLoadingStatus] = useState<Record<string, string>>({});  // Save music settings
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -416,12 +443,18 @@ export default function Home() {
       </div>
     );
   }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white relative overflow-hidden">
       <AnimatedBackground />
       
-      <FixedStatsHeader 
+      {/* Onboarding Guide */}
+      <OnboardingGuide
+        isOpen={showOnboarding}
+        onClose={handleOnboardingClose}
+        onSkip={handleOnboardingSkip}
+      />
+      
+      <FixedStatsHeader
         recipeCount={recipeCount}
         chaosCount={chaosCount}
         shareCount={shareCount}
@@ -506,11 +539,11 @@ export default function Home() {
             </div>
             <h2 className="text-2xl font-bold mt-2">Select Your Ingredients</h2>
           </div>
-          
-          <GlassCard 
+            <GlassCard 
             className="p-8" 
             rarity={recipeCount >= 10 ? 'legendary' : recipeCount >= 5 ? 'epic' : recipeCount >= 3 ? 'rare' : 'common'}
             glow={recipeCount >= 5}
+            data-tutorial="ingredient-upload"
           >
             <IngredientUpload 
               onImageUpload={handleImageUpload}
@@ -526,11 +559,11 @@ export default function Home() {
             </div>
             <h2 className="text-2xl font-bold mt-2">Meet Your Culinary Guide</h2>
           </div>
-          
-          <GlassCard 
+            <GlassCard 
             className="p-8" 
             rarity={chaosCount >= 5 ? 'epic' : chaosCount >= 3 ? 'rare' : 'common'} 
             pulse={isNarrating}
+            data-tutorial="ai-chef"
           >
             <AiChef 
               narration={narration}
@@ -579,7 +612,7 @@ export default function Home() {
               <h2 className="text-2xl font-bold mt-2">Embrace the Chaos</h2>
             </div>
             
-            <GlassCard className="p-8 text-center" rarity="legendary" glow pulse>              <ChaosButton 
+            <GlassCard className="p-8 text-center" rarity="legendary" glow pulse data-tutorial="chaos-button">              <ChaosButton 
                 onClick={handleChaosClick}
                 isLoading={isChaosLoading}
                 chaosCount={chaosCount}
@@ -596,9 +629,8 @@ export default function Home() {
               </div>
               <h2 className="text-2xl font-bold mt-2">Share the Madness</h2>
             </div>
-            
-            <GlassCard className="p-8">
-              <ShareRecipe 
+              <GlassCard className="p-8" data-tutorial="share-recipe">
+              <ShareRecipe
                 recipe={recipe}
                 memeCaption={memeCaption}
                 onShare={() => setShareCount(prev => prev + 1)}
