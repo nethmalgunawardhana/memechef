@@ -1,6 +1,8 @@
 // Text-to-Speech service for AI Chef narration
 // Uses Eleven Labs TTS exclusively
 
+import { cacheService } from './cacheService';
+
 export interface TTSConfig {
   provider: 'elevenlabs';
   voiceId?: string;
@@ -23,9 +25,17 @@ export class TTSService {
     };
     
     console.log('TTS Service initialized with config:', this.config);
-  }// ElevenLabs API (premium, high quality) - via server-side API
+  }  // ElevenLabs API (premium, high quality) - via server-side API
   async speakWithElevenLabs(text: string): Promise<void> {
     try {
+      // Check cache first
+      const cachedAudioUrl = cacheService.getCachedTTSAudio(text);
+      if (cachedAudioUrl) {
+        console.log('Using cached TTS audio');
+        await this.playAudioUrl(cachedAudioUrl);
+        return;
+      }
+
       // Prepare request body with proper defaults
       const requestBody = {
         text: text,
@@ -54,11 +64,14 @@ export class TTSService {
 
       // Check if response is audio or JSON error
       const contentType = response.headers.get('content-type');
-      
-      if (contentType?.includes('audio')) {
+        if (contentType?.includes('audio')) {
         // Success: got audio data
         const audioBlob = await response.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
+        
+        // Cache the audio URL for future use
+        cacheService.cacheTTSAudio(text, audioUrl);
+        
         return this.playAudioUrl(audioUrl);
       } else {
         // Got JSON response, check for errors
