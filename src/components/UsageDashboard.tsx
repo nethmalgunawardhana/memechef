@@ -53,7 +53,7 @@ export default function UsageDashboard({ isOpen, onClose }: UsageDashboardProps)
               <div>
                 <h3 className="text-orange-300 font-bold">High Usage Alert</h3>
                 <p className="text-orange-200 text-sm">
-                  You're approaching your daily API limits. Consider using cached content.
+                  You are approaching your daily API limits. Consider using cached content.
                 </p>
               </div>
             </div>
