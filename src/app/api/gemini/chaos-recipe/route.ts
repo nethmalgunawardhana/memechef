@@ -22,19 +22,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    
-    const prompt = `
-      Take this recipe and make it EVEN MORE CHAOTIC and absurd:
-      ${JSON.stringify(currentRecipe)}
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });    const prompt = `
+      Make this recipe funnier and sillier: ${JSON.stringify(currentRecipe)}
       
-      Add more chaos by:
-      - Replacing normal ingredients with impossible ones ("tears of joy", "essence of confusion")
-      - Adding impossible cooking steps ("summon a goblin for taste testing")
-      - Making measurements even more ridiculous
-      - Adding mystical elements
-      
-      Return in the same JSON format but make it more unhinged!
+      Add silly ingredients and funny steps. Keep it simple and easy to understand.
+      Return same JSON format.
     `;
 
     const result = await model.generateContent([prompt]);

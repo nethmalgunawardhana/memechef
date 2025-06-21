@@ -299,20 +299,26 @@ export default function Home() {
     } catch (error) {
       console.error('Error processing image:', error);
       setComboChain(0);
-      
-      const fallbackRecipe: Recipe = {
-        title: "The Recipe of Technical Difficulties",
-        backstory: "Born from the chaos of AI confusion in the year 2025.",
-        ingredients: ["1 cup of patience", "2 tablespoons of hope", "A pinch of magic"],
+        const fallbackRecipe: Recipe = {
+        title: "The 'My Internet Broke' Sandwich",
+        backstory: "Created when the AI got confused and decided to take a nap instead of helping.",
+        ingredients: [
+          "2 slices of bread (any bread, we're not picky here)",
+          "Whatever's in your fridge that won't kill you",
+          "1 tablespoon of hope",
+          "A pinch of 'this will probably work out'"
+        ],
         instructions: [
-          "Mix ingredients while the AI figures itself out",
-          "Wait patiently for technology to cooperate", 
-          "Serve with understanding"
+          "Put the stuff between the bread (revolutionary, I know)",
+          "Squish it a little so it feels loved",
+          "Take a bite and pretend it's gourmet",
+          "If it tastes weird, add ketchup - ketchup fixes everything",
+          "Enjoy while questioning your life choices!"
         ]
       };
       setRecipe(fallbackRecipe);
-      setNarration("Well, this is awkward! Seems like my AI brain had a little hiccup. But hey, that's just more chaos for the recipe!");
-      setMemeCaption("When the AI chef has an existential crisis mid-recipe 🤖💭");
+      setNarration("Oops! Looks like my AI brain took a little vacation there! But hey, at least we can make a sandwich, right? Sometimes the simplest things are the best things. Plus, I bet this sandwich has more personality than most fancy restaurant food!");
+      setMemeCaption("When the AI chef.exe stops working but you're still hungry 🤖🥪");
     } finally {
       setIsAnalyzing(false);
       setIsGeneratingRecipe(false);

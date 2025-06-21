@@ -22,29 +22,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    
-    const prompt = `
-      Create a completely absurd, meme-worthy recipe using these ingredients: ${ingredients.join(', ')}
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });    const prompt = `
+      Create a simple, funny recipe using: ${ingredients.join(', ')}
       
-      Make it hilarious and chaotic with:
-      - Mix real cooking terms with absurd instructions (e.g., "emotionally dice the onion," "whisk with regret")
-      - Include a fake historical backstory
-      - Use measurements that make no sense
-      - Add impossible steps
+      Make it hilarious but easy to understand. Use silly measurements and funny steps.
       
-      Return response in this exact JSON format:
+      JSON format:
       {
-        "title": "Recipe Name (should be ridiculous)",
-        "backstory": "Fake historical origin story (1-2 sentences)",
-        "ingredients": ["ingredient with absurd measurement", "another ingredient with chaos"],
-        "instructions": ["step 1 with chaos", "step 2 with more chaos", "etc"]
+        "title": "funny recipe name",
+        "backstory": "one silly sentence",
+        "ingredients": ["simple ingredient with funny amount"],
+        "instructions": ["easy step with joke"]
       }
-      
-      Example style:
-      - "3 cups of existential dread"
-      - "Whisper sweet nothings to the pasta for 7 minutes"
-      - "Summon the ancient spirits of flavor"
     `;
 
     const result = await model.generateContent([prompt]);

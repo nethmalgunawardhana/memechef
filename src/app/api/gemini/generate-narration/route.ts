@@ -22,22 +22,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    
-    const prompt = `
-      Create a chaotic, meme-worthy narration script for this recipe in the voice of an unhinged AI chef.
-      Mix TikTok energy with Shakespearean drama. Be over-the-top, funny, and slightly concerning.
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });    const prompt = `
+      Create a fun, simple narration for this recipe: ${JSON.stringify(recipe)}
       
-      Recipe: ${JSON.stringify(recipe)}
-      
-      Style guidelines:
-      - Use modern slang mixed with fancy cooking terms
-      - Be dramatically passionate about cooking
-      - Include random chef wisdom that makes no sense
-      - Act like this recipe will change the world
-      - Maximum 200 words for TTS
-      
-      Example tone: "BEHOLD! *chef's kiss* We're about to create culinary CHAOS that would make Gordon Ramsay weep tears of confusion! This recipe? ICONIC. Your taste buds? UNPREPARED. Let's get chaotic, my beautiful disasters!"
+      Be encouraging and funny like a cool friend teaching cooking. Keep it under 120 words.
+      Use simple words and make jokes about how easy it is.
     `;
 
     const result = await model.generateContent([prompt]);

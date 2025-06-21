@@ -22,14 +22,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
-    
-    const prompt = `
-      Create a funny, shareable meme caption for this absurd recipe: ${recipe.title}
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });    const prompt = `
+      Create a short, funny social media caption for: ${recipe.title}
       
-      Style: Short, punchy, relatable. Like "Just cooked forbidden ramen. My ancestors weep." or "POV: You're explaining to your grandmother why you added existential dread to soup"
-      
-      Keep it under 100 characters for social media.
+      Make it relatable and shareable. Under 60 characters. Add emojis.
     `;
 
     const result = await model.generateContent([prompt]);
