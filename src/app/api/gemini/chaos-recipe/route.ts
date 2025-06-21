@@ -3,6 +3,27 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+// Simple cache for chaos recipes
+const chaosCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes
+
+function getChaosKey(recipe: any): string {
+  return `${recipe.title}_${recipe.ingredients?.length || 0}`;
+}
+
+function getCachedChaos(key: string): any | null {
+  const cached = chaosCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+    return cached.data;
+  }
+  chaosCache.delete(key);
+  return null;
+}
+
+function setChaosCache(key: string, data: any): void {
+  chaosCache.set(key, { data, timestamp: Date.now() });
+}
+
 export async function POST(request: NextRequest) {
   try {
     if (!process.env.GEMINI_API_KEY) {
@@ -12,8 +33,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { currentRecipe } = body;
+    const body = await request.json();    const { currentRecipe } = body;
 
     if (!currentRecipe) {
       return NextResponse.json(
@@ -22,7 +42,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });    const prompt = `
+    // Check cache first
+    const cacheKey = getChaosKey(currentRecipe);
+    const cached = getCachedChaos(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });const prompt = `
       Make this recipe funnier and sillier: ${JSON.stringify(currentRecipe)}
       
       Add silly ingredients and funny steps. Keep it simple and easy to understand.
@@ -32,11 +59,12 @@ export async function POST(request: NextRequest) {
     const result = await model.generateContent([prompt]);
     const response = await result.response;
     const text = response.text();
-    
-    // Extract JSON from response
+      // Extract JSON from response
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const chaosRecipe = JSON.parse(jsonMatch[0]);
+      // Cache the result
+      setChaosCache(cacheKey, chaosRecipe);
       return NextResponse.json(chaosRecipe);
     }
     

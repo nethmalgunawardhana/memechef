@@ -2,8 +2,10 @@
 // No longer using direct Gemini API calls for security
 
 import { cacheService } from './cacheService';
-import { usageTracker } from './usageTracker';
 import { requestOptimizer } from './requestOptimizer';
+
+// Simple request deduplication
+const pendingRequests = new Map<string, Promise<any>>();
 
 export interface Recipe {
   title: string;
@@ -94,9 +96,6 @@ export async function generateAbsurdRecipe(ingredients: string[]): Promise<Recip
     if (!response.ok) {
       throw new Error(`API request failed: ${response.status}`);
     }    const result = await response.json();
-    
-    // Track API usage
-    usageTracker.trackGeminiCall(result.tokensUsed || 0);
     
     // Cache the result
     cacheService.cacheRecipe(ingredients, result);

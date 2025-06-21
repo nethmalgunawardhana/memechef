@@ -17,7 +17,6 @@ import MusicControl from "@/components/MusicControl";
 import MusicTip from "@/components/MusicTip";
 import ComboCounter from "@/components/ComboCounter";
 import LevelUpNotification from "@/components/LevelUpNotification";
-import UsageDashboard from "@/components/UsageDashboard";
 import { 
   analyzeIngredients, 
   generateAbsurdRecipe, 
@@ -79,9 +78,8 @@ export default function Home() {
   const [comboTimer, setComboTimer] = useState<NodeJS.Timeout | null>(null);  // Background music state
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
   const [musicVolume, setMusicVolume] = useState(0.3);
-    const [, setUserHasInteracted] = useState(false);
+  const [, setUserHasInteracted] = useState(false);
   const [showMusicTip, setShowMusicTip] = useState(true);
-  const [showUsageDashboard, setShowUsageDashboard] = useState(false);
 
   // Initialize music volume from localStorage after component mounts
   useEffect(() => {

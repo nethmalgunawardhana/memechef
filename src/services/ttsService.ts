@@ -3,6 +3,9 @@
 
 import { cacheService } from './cacheService';
 
+// Prevent duplicate TTS requests
+const pendingRequests = new Map<string, Promise<void>>();
+
 export interface TTSConfig {
   provider: 'elevenlabs';
   voiceId?: string;
@@ -28,6 +31,12 @@ export class TTSService {
   }  // ElevenLabs API (premium, high quality) - via server-side API
   async speakWithElevenLabs(text: string): Promise<void> {
     try {
+      // Prevent duplicate requests for same text
+      const textKey = text.slice(0, 50);
+      if (pendingRequests.has(textKey)) {
+        return pendingRequests.get(textKey);
+      }
+
       // Check cache first
       const cachedAudioUrl = cacheService.getCachedTTSAudio(text);
       if (cachedAudioUrl) {
@@ -35,6 +44,23 @@ export class TTSService {
         await this.playAudioUrl(cachedAudioUrl);
         return;
       }
+
+      // Create and store the promise to prevent duplicates
+      const ttsPromise = this.performTTSRequest(text);
+      pendingRequests.set(textKey, ttsPromise);
+
+      try {
+        await ttsPromise;
+      } finally {
+        pendingRequests.delete(textKey);
+      }
+    } catch (error) {
+      console.error('ElevenLabs TTS error:', error);
+      throw error;
+    }
+  }
+
+  private async performTTSRequest(text: string): Promise<void> {
 
       // Prepare request body with proper defaults
       const requestBody = {
@@ -63,8 +89,7 @@ export class TTSService {
       }
 
       // Check if response is audio or JSON error
-      const contentType = response.headers.get('content-type');
-        if (contentType?.includes('audio')) {
+      const contentType = response.headers.get('content-type');      if (contentType?.includes('audio')) {
         // Success: got audio data
         const audioBlob = await response.blob();
         const audioUrl = URL.createObjectURL(audioBlob);
@@ -81,11 +106,6 @@ export class TTSService {
         }
         throw new Error('Unexpected response format from TTS API');
       }
-
-    } catch (error) {
-      console.error('ElevenLabs TTS error:', error);
-      throw error;
-    }
   }
   // Play audio from URL
   private async playAudioUrl(audioUrl: string): Promise<void> {
