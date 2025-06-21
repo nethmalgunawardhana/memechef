@@ -51,13 +51,22 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   const [isNarrating, setIsNarrating] = useState(false);
-  const [isChaosLoading, setIsChaosLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isChaosLoading, setIsChaosLoading] = useState(false);  const [isLoading, setIsLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
   
   // Stats for achievements
   const [recipeCount, setRecipeCount] = useState(0);
   const [chaosCount, setChaosCount] = useState(0);
   const [shareCount, setShareCount] = useState(0);
+
+  // Initialize client-side rendering
+  useEffect(() => {
+    setIsClient(true);
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
   
   // Game mechanics
   const [playerXP, setPlayerXP] = useState(0);
@@ -68,16 +77,18 @@ export default function Home() {
   const [gameEffects, setGameEffects] = useState<Array<{id: number, type: 'success' | 'bonus' | 'level-up', message: string}>>([]);
   const [comboTimer, setComboTimer] = useState<NodeJS.Timeout | null>(null);  // Background music state
   const [isMusicPlaying, setIsMusicPlaying] = useState(false);
-  const [musicVolume, setMusicVolume] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const savedVolume = localStorage.getItem('memechef-music-volume');
-      return savedVolume ? parseFloat(savedVolume) : 0.3;
-    }
-    return 0.3;
-  });
+  const [musicVolume, setMusicVolume] = useState(0.3);
   
   const [, setUserHasInteracted] = useState(false);
   const [showMusicTip, setShowMusicTip] = useState(true);
+
+  // Initialize music volume from localStorage after component mounts
+  useEffect(() => {
+    const savedVolume = localStorage.getItem('memechef-music-volume');
+    if (savedVolume) {
+      setMusicVolume(parseFloat(savedVolume));
+    }
+  }, []);
   const [audioLoadingStatus, setAudioLoadingStatus] = useState<Record<string, string>>({});  // Save music settings
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -101,14 +112,8 @@ export default function Home() {
       soundManager.updateConfig(!isMusicPlaying, musicVolume);
     }
   }, [musicVolume, isMusicPlaying]);
-
   // Loading screen
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, []);
+  // Removed the duplicate loading screen useEffect since it's now combined with isClient
 
   // Load/save stats
   useEffect(() => {
@@ -393,8 +398,7 @@ export default function Home() {
       console.error('Error generating caption:', error);
     }
   };
-
-  if (isLoading) {
+  if (!isClient || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center">
         <div className="text-center">
