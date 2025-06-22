@@ -1,12 +1,29 @@
 {
   "name": "memechef",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
+  "description": "AI-Powered Recipe Creator & Cooking Game - Built with Bolt.new",
+  "keywords": [
+    "ai",
+    "recipe",
+    "cooking",
+    "game",
+    "bolt",
+    "nextjs",
+    "gemini",
+    "elevenlabs"
+  ],
+  "homepage": "https://memechef.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/memechef.git"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "export": "next build && next export"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -26,5 +43,14 @@
     "eslint-config-next": "15.3.3",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "bolt": {
+    "builtWith": "bolt.new",
+    "version": "1.0.0",
+    "framework": "Next.js",
+    "language": "TypeScript"
   }
 }

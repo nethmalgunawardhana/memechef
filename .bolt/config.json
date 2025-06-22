@@ -1,30 +1,27 @@
 {
+  "name": "MemeChef",
+  "description": "AI-Powered Recipe Creator & Cooking Game - Transform random ingredients into hilarious recipes with AI!",
   "version": "1.0.0",
-  "created": "2025-01-27",
-  "framework": "nextjs",
-  "language": "typescript",
-  "styling": "tailwindcss",
+  "framework": "Next.js",
+  "language": "TypeScript",
   "features": [
-    "ai-integration",
-    "text-to-speech",
-    "image-processing",
-    "game-mechanics",
-    "social-sharing",
-    "responsive-design",
-    "sound-effects"
+    "AI Recipe Generation",
+    "Text-to-Speech Narration",
+    "Image Analysis",
+    "Social Media Sharing",
+    "Achievement System",
+    "Chaos Mode",
+    "Background Music"
   ],
   "apis": [
-    "google-gemini",
-    "elevenlabs-tts"
+    "Google Gemini AI",
+    "ElevenLabs TTS"
   ],
+  "builtWithBolt": true,
+  "exportable": true,
   "deployment": {
-    "platform": "vercel",
-    "domain": "memechef.vercel.app"
-  },
-  "bolt": {
-    "environment": "bolt.new",
-    "ai_assisted": true,
-    "development_time": "rapid",
-    "complexity": "high"
+    "platform": "Vercel",
+    "buildCommand": "npm run build",
+    "outputDirectory": ".next"
   }
 }

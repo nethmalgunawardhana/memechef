@@ -18,6 +18,7 @@ import MusicTip from "@/components/MusicTip";
 import ComboCounter from "@/components/ComboCounter";
 import LevelUpNotification from "@/components/LevelUpNotification";
 import OnboardingGuide, { useOnboardingKeyboard } from "@/components/OnboardingGuide";
+import BoltBadge from "@/components/BoltBadge";
 import { 
   analyzeIngredients, 
   generateAbsurdRecipe, 
@@ -527,6 +528,11 @@ export default function Home() {
                 Title: <span className={`font-bold`}>{getCurrentLevelInfo().title}</span>
               </span>
             </div>
+            
+            {/* Built with Bolt Badge */}
+            <div className="flex justify-center mt-6">
+              <BoltBadge variant="default" />
+            </div>
           </div>
         </div>
       </div>
@@ -661,10 +667,12 @@ export default function Home() {
 
       <footer className="relative">
         <div className="max-w-6xl mx-auto px-4 py-8 text-center text-white/50">
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="flex items-center justify-center gap-4 mb-4">
             <Heart className="w-4 h-4 text-red-400" />
             <span>Made with chaos and creativity</span>
             <Heart className="w-4 h-4 text-red-400" />
+            <span>•</span>
+            <BoltBadge variant="minimal" showText={false} />
           </div>
           <p className="text-sm">
             MemeChef © 2025 | Where culinary disasters become digital masterpieces
