@@ -1,0 +1,30 @@
+{
+  "version": "1.0.0",
+  "created": "2025-01-27",
+  "framework": "nextjs",
+  "language": "typescript",
+  "styling": "tailwindcss",
+  "features": [
+    "ai-integration",
+    "text-to-speech",
+    "image-processing",
+    "game-mechanics",
+    "social-sharing",
+    "responsive-design",
+    "sound-effects"
+  ],
+  "apis": [
+    "google-gemini",
+    "elevenlabs-tts"
+  ],
+  "deployment": {
+    "platform": "vercel",
+    "domain": "memechef.vercel.app"
+  },
+  "bolt": {
+    "environment": "bolt.new",
+    "ai_assisted": true,
+    "development_time": "rapid",
+    "complexity": "high"
+  }
+}
