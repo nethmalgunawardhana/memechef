@@ -53,8 +53,12 @@ export default function Home() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   const [isNarrating, setIsNarrating] = useState(false);
-  const [isChaosLoading, setIsChaosLoading] = useState(false);  const [isLoading, setIsLoading] = useState(true);
+  const [isChaosLoading, setIsChaosLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isClient, setIsClient] = useState(false);
+  const [showStartScreen, setShowStartScreen] = useState(true);
+  const [gameStarted, setGameStarted] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   
   // Stats for achievements
   const [recipeCount, setRecipeCount] = useState(0);
@@ -64,10 +68,16 @@ export default function Home() {
   // Initialize client-side rendering
   useEffect(() => {
     setIsClient(true);
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-    return () => clearTimeout(timer);
+    // Check if user has played before
+    const hasPlayedBefore = localStorage.getItem('memechef-has-played');
+    if (hasPlayedBefore) {
+      setShowStartScreen(false);
+      setGameStarted(true);
+      const timer = setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
   }, []);
   
   // Game mechanics
@@ -431,7 +441,95 @@ export default function Home() {
       console.error('Error generating caption:', error);
     }
   };
-  if (!isClient || isLoading) {
+  // Game start handler
+  const handleGameStart = () => {
+    // Play sound effect if available
+    try {
+      playSound('success');
+    } catch {
+      // Silently fail if sound is not available
+    }
+    
+    setGameStarted(true);
+    setLoadingProgress(0);
+    
+    // Animate loading progress from 0 to 100%
+    const duration = 3000; // 3 seconds
+    const interval = 50; // Update every 50ms
+    const steps = duration / interval;
+    const increment = 100 / steps;
+    
+    let currentProgress = 0;
+    const progressInterval = setInterval(() => {
+      currentProgress += increment;
+      setLoadingProgress(Math.min(currentProgress, 100));
+      
+      if (currentProgress >= 100) {
+        clearInterval(progressInterval);
+        setTimeout(() => {
+          setShowStartScreen(false);
+          setIsLoading(false);
+          localStorage.setItem('memechef-has-played', 'true');
+        }, 500);
+      }
+    }, interval);
+  };
+
+  // Show start screen for new players
+  if (!isClient || (showStartScreen && !gameStarted)) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center relative overflow-hidden">
+        <AnimatedBackground />
+        <div className="text-center z-10 relative">
+          <div className="text-8xl mb-6 animate-bounce">🧑‍🍳</div>
+          <h1 className="text-6xl md:text-7xl font-black bg-gradient-to-r from-purple-400 via-pink-400 to-orange-400 bg-clip-text text-transparent mb-4">
+            MemeChef
+          </h1>
+          <p className="text-2xl text-white/80 font-light mb-8">
+            The Ultimate Culinary Chaos Game
+          </p>
+          <p className="text-lg text-white/60 mb-12 max-w-2xl mx-auto">
+            Turn your ingredients into absurd recipes, embrace the chaos, and become a culinary legend!
+          </p>
+          <button
+            onClick={handleGameStart}
+            className="px-12 py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-bold text-xl rounded-full transition-all duration-300 transform hover:scale-105 hover:shadow-2xl active:scale-95"
+          >
+            🚀 Start Your Culinary Adventure
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Show loading screen during game initialization
+  if (showStartScreen && gameStarted) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center relative overflow-hidden">
+        <AnimatedBackground />
+        <div className="text-center z-10 relative">
+          <div className="text-6xl mb-4 animate-spin">🍳</div>
+          <div className="text-2xl font-bold mb-6">Preparing Your Kitchen...</div>
+          <div className="w-80 h-4 bg-white/20 rounded-full overflow-hidden mx-auto mb-4">
+            <div 
+              className="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full transition-all duration-300 ease-out"
+              style={{ width: `${loadingProgress}%` }}
+            ></div>
+          </div>
+          <div className="text-lg text-white/70">{Math.round(loadingProgress)}%</div>
+          <div className="text-sm text-white/50 mt-2">
+            {loadingProgress < 30 && "Sharpening knives..."}
+            {loadingProgress >= 30 && loadingProgress < 60 && "Heating up the stove..."}
+            {loadingProgress >= 60 && loadingProgress < 90 && "Gathering ingredients..."}
+            {loadingProgress >= 90 && "Almost ready to cook!"}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show regular loading for returning players
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 text-white flex items-center justify-center">
         <div className="text-center">
