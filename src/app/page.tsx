@@ -19,6 +19,12 @@ import ComboCounter from "@/components/ComboCounter";
 import LevelUpNotification from "@/components/LevelUpNotification";
 import OnboardingGuide, { useOnboardingKeyboard } from "@/components/OnboardingGuide";
 import BoltBadge from "@/components/BoltBadge";
+import DailyChallenge from "@/components/DailyChallenge";
+import RecipeHistory from "@/components/RecipeHistory";
+import PowerUpSystem from "@/components/PowerUpSystem";
+import Leaderboard from "@/components/Leaderboard";
+import MiniGameSystem from "@/components/MiniGameSystem";
+import InventorySystem from "@/components/InventorySystem";
 import { 
   analyzeIngredients, 
   generateAbsurdRecipe, 
@@ -84,6 +90,7 @@ export default function Home() {
   const [playerXP, setPlayerXP] = useState(0);
   const [playerLevel, setPlayerLevel] = useState(1);
   const [comboChain, setComboChain] = useState(0);
+  const [maxComboChain, setMaxComboChain] = useState(0); // Track highest combo
   const [lastAction, setLastAction] = useState<string | null>(null);
   const [floatingItems, setFloatingItems] = useState<Array<{id: number, emoji: string, points?: number, x: number, y: number}>>([]);
   const [gameEffects, setGameEffects] = useState<Array<{id: number, type: 'success' | 'bonus' | 'level-up', message: string}>>([]);
@@ -301,6 +308,68 @@ export default function Home() {
     // The sound manager will be updated by the useEffect hook
   };
 
+  // New game function handlers
+  const handleChallengeComplete = (reward: { xp: number; title?: string; emoji?: string }) => {
+    addXP(reward.xp, '🎉', window.innerWidth / 2, window.innerHeight / 3);
+    
+    if (reward.title) {
+      setGameEffects(prev => [...prev, {
+        id: Date.now(),
+        type: 'bonus',
+        message: `New Title: ${reward.title}`
+      }]);
+    }
+    
+    playSound('achievement');
+  };
+
+  const handleLoadRecipe = (loadedRecipe: Recipe) => {
+    setRecipe(loadedRecipe);
+    // Generate fresh narration for loaded recipe
+    generateChefNarration(loadedRecipe).then(setNarration);
+    // Generate fresh meme caption
+    generateMemeCaption(loadedRecipe).then(setMemeCaption);
+  };
+
+  const handleShareRecipe = (recipeToShare: Recipe) => {
+    // This could integrate with the existing ShareRecipe component
+    setShareCount(prev => prev + 1);
+    addXP(25, '📤', window.innerWidth / 2, window.innerHeight / 2);
+  };
+
+  const handleXPSpent = (amount: number) => {
+    setPlayerXP(prev => Math.max(0, prev - amount));
+  };
+
+  const handlePowerUpActivated = (effect: string, duration: number) => {
+    setGameEffects(prev => [...prev, {
+      id: Date.now(),
+      type: 'bonus',
+      message: `Power-Up: ${effect.replace('-', ' ')}`
+    }]);
+    
+    // Here you could implement the actual power-up effects
+    // For example, storing active power-ups in state and modifying game logic
+  };
+
+  const handleMiniGameReward = (xp: number, gameType: string) => {
+    addXP(xp, '🎮', window.innerWidth / 2, window.innerHeight / 2);
+    setGameEffects(prev => [...prev, {
+      id: Date.now(),
+      type: 'bonus',
+      message: `${gameType} Complete! +${xp} XP`
+    }]);
+    playSound('achievement');
+  };
+
+  // Update max combo chain tracking
+  useEffect(() => {
+    if (comboChain > maxComboChain) {
+      setMaxComboChain(comboChain);
+    }
+  }, [comboChain, maxComboChain]);
+
+  // ...existing handlers...
   const handleImageUpload = async (file: File) => {
     setIsAnalyzing(true);
     setIsGeneratingRecipe(true);
@@ -760,8 +829,39 @@ export default function Home() {
               playerXP={playerXP}
             />
           </GlassCard>
-        </section>
-      </main>
+        </section>      </main>
+
+      {/* New Game Features */}
+      <DailyChallenge
+        recipeCount={recipeCount}
+        chaosCount={chaosCount}
+        maxComboChain={maxComboChain}
+        onChallengeComplete={handleChallengeComplete}
+      />
+
+      <RecipeHistory
+        currentRecipe={recipe}
+        onLoadRecipe={handleLoadRecipe}
+        onShareRecipe={handleShareRecipe}
+      />
+
+      <PowerUpSystem
+        playerLevel={playerLevel}
+        playerXP={playerXP}
+        onXPSpent={handleXPSpent}
+        onPowerUpActivated={handlePowerUpActivated}
+      />      <Leaderboard
+        playerLevel={playerLevel}
+        playerXP={playerXP}
+        recipeCount={recipeCount}
+        chaosCount={chaosCount}
+        achievementCount={0}
+      />
+
+      <MiniGameSystem
+        playerLevel={playerLevel}
+        onRewardEarned={handleMiniGameReward}
+      />
 
       <footer className="relative">
         <div className="max-w-6xl mx-auto px-4 py-8 text-center text-white/50">
